@@ -1,0 +1,375 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  preparing
+  ready
+  on_delivery
+  delivered
+  cancelled
+}
+
+enum ReservationStatus {
+  pending
+  confirmed
+  cancelled
+}
+
+enum RiderStatus {
+  online
+  offline
+  on_delivery
+}
+
+enum ChatThreadStatus {
+  open
+  closed
+}
+
+enum UserRole {
+  owner
+  admin
+  manager
+  support
+  rider
+  customer
+}
+
+enum PromotionStatus {
+  draft
+  scheduled
+  active
+  paused
+  expired
+}
+
+enum CouponType {
+  percent
+  fixed
+  free_delivery
+}
+
+enum LoyaltyTier {
+  bronze
+  silver
+  gold
+  platinum
+}
+
+enum AutomationTriggerType {
+  schedule
+  event
+  condition
+}
+
+enum AutomationActionType {
+  activate_promotion
+  deactivate_promotion
+  send_coupon
+  send_notification
+  update_segment
+  award_loyalty
+}
+
+enum AutomationExecutionStatus {
+  queued
+  running
+  success
+  failed
+}
+
+enum UpsellRuleType {
+  combo
+  cross_sell
+  upsell
+  free_delivery_progress
+  premium_upgrade
+  frequently_bought
+}
+
+enum ExperimentStatus {
+  draft
+  running
+  completed
+  paused
+}
+
+model User {
+  id           String       @id @default(uuid())
+  name         String
+  phone        String?
+  email        String       @unique
+  dob          DateTime?
+  role         UserRole
+  createdAt    DateTime     @default(now())
+  orders       Order[]
+  reservations Reservation[]
+  riderProfile RiderProfile?
+  profile      CustomerProfile?
+}
+
+model MenuItem {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  price       Decimal
+  category    String
+  image       String
+  available   Boolean  @default(true)
+  prepTime    Int
+  tags        String[]
+  optionsJson Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  items       OrderItem[]
+}
+
+model Order {
+  id              String          @id @default(uuid())
+  customerId      String
+  customer        User            @relation(fields: [customerId], references: [id])
+  status          OrderStatus     @default(pending)
+  channel         String          @default("web")
+  subtotal        Decimal         @default(0)
+  deliveryFee     Decimal         @default(0)
+  discountTotal   Decimal         @default(0)
+  total           Decimal
+  createdAt       DateTime        @default(now())
+  deliveryAddress String
+  assignedRiderId String?
+  items           OrderItem[]
+  trackingUpdates TrackingUpdate[]
+  chatThreads     ChatThread[]
+  redemptions     Redemption[]
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id])
+  menuItemId String?
+  menuItem   MenuItem? @relation(fields: [menuItemId], references: [id])
+  name       String
+  quantity   Int
+  price      Decimal
+}
+
+model Reservation {
+  id         String             @id @default(uuid())
+  customerId String?
+  customer   User?              @relation(fields: [customerId], references: [id])
+  name       String
+  email      String
+  phone      String
+  date       DateTime
+  guests     Int
+  status     ReservationStatus  @default(pending)
+  notes      String?
+  createdAt  DateTime           @default(now())
+}
+
+model RiderProfile {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id])
+  status    RiderStatus @default(offline)
+  currentLat Float?
+  currentLng Float?
+  updatedAt DateTime   @updatedAt
+}
+
+model TrackingUpdate {
+  id        String      @id @default(uuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id])
+  riderId   String?
+  status    OrderStatus?
+  lat       Float
+  lng       Float
+  createdAt DateTime    @default(now())
+}
+
+model ChatThread {
+  id        String           @id @default(uuid())
+  orderId   String
+  order     Order            @relation(fields: [orderId], references: [id])
+  status    ChatThreadStatus @default(open)
+  createdAt DateTime         @default(now())
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id         String   @id @default(uuid())
+  threadId   String
+  thread     ChatThread @relation(fields: [threadId], references: [id])
+  senderRole UserRole
+  senderName String
+  message    String
+  createdAt  DateTime @default(now())
+}
+
+model CustomerProfile {
+  userId        String     @id
+  user          User       @relation(fields: [userId], references: [id])
+  tier          LoyaltyTier @default(bronze)
+  points        Int        @default(0)
+  lifetimeSpend Decimal    @default(0)
+  orderCount    Int        @default(0)
+  lastOrderAt   DateTime?
+}
+
+model Promotion {
+  id           String          @id @default(uuid())
+  name         String
+  description  String?
+  status       PromotionStatus @default(draft)
+  startAt      DateTime?
+  endAt        DateTime?
+  stackable    Boolean         @default(false)
+  priority     Int             @default(0)
+  rulesJson    Json
+  scheduleJson Json?
+  budgetCap    Decimal?
+  maxDiscount  Decimal?
+  createdBy    String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  redemptions  Redemption[]
+}
+
+model Coupon {
+  id           String     @id @default(uuid())
+  name         String
+  code         String     @unique
+  type         CouponType
+  value        Decimal
+  minPurchase  Decimal?
+  maxDiscount  Decimal?
+  perUserLimit Int?
+  totalLimit   Int?
+  startAt      DateTime?
+  endAt        DateTime?
+  segmentIds   Json?
+  stackable    Boolean    @default(true)
+  isPublic     Boolean    @default(true)
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  redemptions  Redemption[]
+}
+
+model Redemption {
+  id           String   @id @default(uuid())
+  couponId     String?
+  promotionId  String?
+  orderId      String?
+  userId       String?
+  discountAmount Decimal @default(0)
+  createdAt    DateTime @default(now())
+  coupon       Coupon?    @relation(fields: [couponId], references: [id])
+  promotion    Promotion? @relation(fields: [promotionId], references: [id])
+  order        Order?     @relation(fields: [orderId], references: [id])
+}
+
+model Segment {
+  id             String   @id @default(uuid())
+  name           String
+  definitionJson Json
+  isDynamic      Boolean  @default(true)
+  createdAt      DateTime @default(now())
+}
+
+model AutomationRule {
+  id               String                @id @default(uuid())
+  name             String
+  triggerType      AutomationTriggerType
+  triggerConfigJson Json
+  actionType       AutomationActionType
+  actionConfigJson Json
+  isActive         Boolean               @default(true)
+  createdAt        DateTime              @default(now())
+  executions       AutomationExecution[]
+}
+
+model AutomationExecution {
+  id          String                   @id @default(uuid())
+  ruleId      String
+  rule        AutomationRule           @relation(fields: [ruleId], references: [id])
+  status      AutomationExecutionStatus @default(queued)
+  ranAt       DateTime?
+  outputJson  Json?
+  errorMessage String?
+  createdAt   DateTime                 @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorUserId String?
+  entityType  String
+  entityId    String
+  action      String
+  beforeJson  Json?
+  afterJson   Json?
+  createdAt   DateTime @default(now())
+}
+
+model UpsellRule {
+  id             String        @id @default(uuid())
+  name           String
+  type           UpsellRuleType
+  conditionsJson Json
+  actionsJson    Json
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+}
+
+model Experiment {
+  id             String           @id @default(uuid())
+  name           String
+  hypothesis     String?
+  status         ExperimentStatus @default(draft)
+  trafficSplit   Json
+  primaryMetric  String
+  startAt        DateTime?
+  endAt          DateTime?
+  createdAt      DateTime         @default(now())
+  variants       ExperimentVariant[]
+}
+
+model ExperimentVariant {
+  id           String     @id @default(uuid())
+  experimentId String
+  experiment   Experiment @relation(fields: [experimentId], references: [id])
+  name         String
+  configJson   Json
+  isControl    Boolean    @default(false)
+}
+
+model SegmentContent {
+  id         String   @id @default(uuid())
+  segmentId  String?
+  contentJson Json
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}
+
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  valueJson Json
+  updatedAt DateTime @updatedAt
+}
+
+model RoleConfig {
+  id          String   @id @default(uuid())
+  role        String   @unique
+  permissions Json
+  updatedAt   DateTime @updatedAt
+}

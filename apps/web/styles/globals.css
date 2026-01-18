@@ -1,0 +1,147 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #D97706;
+  --color-primary-hover: #B45309;
+  --color-primary-contrast: #FFFFFF;
+  --color-secondary: #1F2937;
+  --color-secondary-hover: #111827;
+  --color-secondary-contrast: #FFFFFF;
+  --color-accent: #10B981;
+  --color-accent-hover: #059669;
+  --color-accent-contrast: #FFFFFF;
+  --color-destructive: #EF4444;
+  --color-destructive-hover: #DC2626;
+  --color-destructive-contrast: #FFFFFF;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-info: #3B82F6;
+  --color-surface: #FFFBEB;
+  --color-surface-alt: #FFFFFF;
+  --color-border: #E5E7EB;
+  --color-muted: #6B7280;
+  --color-muted-contrast: #111827;
+
+  --status-pending: #F59E0B;
+  --status-pending-contrast: #1F2937;
+  --status-confirmed: #3B82F6;
+  --status-confirmed-contrast: #FFFFFF;
+  --status-preparing: #D97706;
+  --status-preparing-contrast: #FFFFFF;
+  --status-ready: #10B981;
+  --status-ready-contrast: #FFFFFF;
+  --status-on-delivery: #2563EB;
+  --status-on-delivery-contrast: #FFFFFF;
+  --status-delivered: #059669;
+  --status-delivered-contrast: #FFFFFF;
+  --status-cancelled: #EF4444;
+  --status-cancelled-contrast: #FFFFFF;
+
+  --font-heading: "Playfair Display", serif;
+  --font-body: "Source Sans 3", sans-serif;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 2rem;
+  --font-size-3xl: 2.5rem;
+  --font-size-4xl: 3rem;
+
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.7;
+
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 6px 12px -4px rgba(15, 23, 42, 0.18);
+  --shadow-lg: 0 16px 24px -12px rgba(15, 23, 42, 0.22);
+  --shadow-xl: 0 24px 48px -16px rgba(15, 23, 42, 0.28);
+
+  --layout-content: 72rem;
+  --layout-sidebar: 17rem;
+  --layout-map-panel: 24rem;
+  --layout-map-height: 20rem;
+  --layout-hero-height: 28rem;
+  --layout-textarea-height: 7.5rem;
+
+  --opacity-disabled: 0.6;
+
+  --focus-ring: 2px solid #D97706;
+  --focus-ring-offset: 3px;
+  --badge-offset: -0.25rem;
+
+  --app-bg: radial-gradient(circle at 20% 0%, rgba(217, 119, 6, 0.18), transparent 52%),
+    radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.16), transparent 48%),
+    linear-gradient(180deg, #FFFBEB 0%, #FFF7ED 55%, #FFFFFF 100%);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    font-family: var(--font-body);
+    color: var(--color-secondary);
+    background: var(--app-bg);
+    line-height: var(--line-height-normal);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading);
+    color: var(--color-secondary);
+    line-height: var(--line-height-tight);
+  }
+}
+
+@layer components {
+  .app-shell {
+    min-height: 100vh;
+  }
+
+  .focus-ring:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  .section-surface {
+    background-color: var(--color-surface-alt);
+    box-shadow: var(--shadow-md);
+    border-radius: var(--radius-xl);
+  }
+
+  .subtle-panel {
+    background-color: var(--color-surface);
+    border-radius: var(--radius-lg);
+  }
+
+  .textarea-base {
+    min-height: var(--layout-textarea-height);
+  }
+
+  .badge-floating {
+    position: absolute;
+    top: var(--badge-offset);
+    right: var(--badge-offset);
+  }
+}

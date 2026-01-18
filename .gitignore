@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.env
+.env.*
+apps/api/.env
+apps/web/.env
+apps/api/dist/
+apps/web/.next/
+apps/api/uploads/
+apps/api/prisma-dev*.log
+prisma-dev*.log

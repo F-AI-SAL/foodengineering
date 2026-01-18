@@ -1,0 +1,30 @@
+import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
+import { LoyaltyService } from "./loyalty.service";
+import { AdjustPointsDto } from "./dto/loyalty.dto";
+import { Roles } from "../roles/roles.decorator";
+import { RolesGuard } from "../roles/roles.guard";
+import { UserRole } from "../common/enums/user-role.enum";
+
+@Controller("loyalty")
+@UseGuards(RolesGuard)
+export class LoyaltyController {
+  constructor(private readonly loyaltyService: LoyaltyService) {}
+
+  @Get("tiers")
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.OWNER)
+  tiers() {
+    return this.loyaltyService.getTiers();
+  }
+
+  @Get("members")
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.OWNER)
+  members() {
+    return this.loyaltyService.getMembers();
+  }
+
+  @Post("adjust")
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.OWNER)
+  adjust(@Body() dto: AdjustPointsDto) {
+    return this.loyaltyService.adjustPoints(dto);
+  }
+}
