@@ -24,6 +24,7 @@ import { GrowthModule } from "./growth/growth.module";
 import { CommonModule } from "./common/common.module";
 import { SettingsModule } from "./settings/settings.module";
 import { AuthModule } from "./auth/auth.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 
 @Module({
   imports: [
@@ -55,7 +56,8 @@ import { AuthModule } from "./auth/auth.module";
     PricingModule,
     GrowthModule,
     SettingsModule,
-    AuthModule
+    AuthModule,
+    NotificationsModule
   ]
 })
 export class AppModule {}

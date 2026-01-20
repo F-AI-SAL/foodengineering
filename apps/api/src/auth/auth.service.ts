@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import { randomBytes, createHash } from "crypto";
+import { NotificationsService } from "../notifications/notifications.service";
 import { PrismaService } from "../prisma/prisma.service";
 import type { User } from "@prisma/client";
 
@@ -11,7 +12,8 @@ type SafeUser = Omit<User, "passwordHash">;
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private readonly notificationsService: NotificationsService
   ) {}
 
   async validateUser(email: string, password: string): Promise<SafeUser> {
@@ -62,6 +64,25 @@ export class AuthService {
     if (process.env.NODE_ENV !== "production") {
       response.resetToken = rawToken;
     }
+
+    const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+    const resetUrl = `${appUrl}/admin/login?reset=${rawToken}`;
+    const message = `Use this link to reset your password: ${resetUrl}`;
+
+    await this.notificationsService.sendEmail({
+      to: user.email,
+      subject: "Reset your Food Engineering password",
+      html: `<p>${message}</p>`,
+      text: message
+    });
+
+    if (user.phone) {
+      await this.notificationsService.sendWhatsApp({
+        to: user.phone,
+        body: message
+      });
+    }
+
     return response;
   }
 

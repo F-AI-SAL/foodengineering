@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { API_BASE } from "@/lib/api";
 import { AUTH_TOKEN_KEY } from "@/lib/auth";
@@ -20,6 +20,15 @@ export default function AdminLoginPage() {
   const [newPassword, setNewPassword] = useState("");
   const [mode, setMode] = useState<"login" | "forgot" | "reset">("login");
   const [status, setStatus] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("reset");
+    if (token) {
+      setResetToken(token);
+      setMode("reset");
+    }
+  }, []);
 
   const handleLogin = async () => {
     setStatus("Signing in...");
