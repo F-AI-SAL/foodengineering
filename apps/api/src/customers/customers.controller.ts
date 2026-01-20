@@ -3,9 +3,10 @@ import { CustomersService } from "./customers.service";
 import { Roles } from "../roles/roles.decorator";
 import { RolesGuard } from "../roles/roles.guard";
 import { UserRole } from "../common/enums/user-role.enum";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 
 @Controller("customers")
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
 

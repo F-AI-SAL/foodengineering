@@ -36,7 +36,28 @@ npm run start:dev
 ```
 API will be on `http://localhost:4000`.
 
-### 6) Run the frontend
+### 6) Authentication (Admin)
+Seeded admin login (for local dev):
+- Email: `admin@foodengineering.com`
+- Password: `Admin@123`
+
+Get a token:
+```bash
+POST http://localhost:4000/auth/login
+```
+Body:
+```json
+{
+  "email": "admin@foodengineering.com",
+  "password": "Admin@123"
+}
+```
+Store the `accessToken` in the browser:
+```js
+localStorage.setItem("auth_token", "<accessToken>");
+```
+
+### 7) Run the frontend
 ```bash
 cd d:\food_engineering\apps\web
 npm run dev

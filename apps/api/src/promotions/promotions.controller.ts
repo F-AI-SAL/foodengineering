@@ -4,9 +4,10 @@ import { CreatePromotionDto, UpdatePromotionDto } from "./dto/promotion.dto";
 import { Roles } from "../roles/roles.decorator";
 import { RolesGuard } from "../roles/roles.guard";
 import { UserRole } from "../common/enums/user-role.enum";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 
 @Controller("promotions")
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class PromotionsController {
   constructor(private readonly promotionsService: PromotionsService) {}
 

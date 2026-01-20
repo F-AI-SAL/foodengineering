@@ -4,9 +4,10 @@ import { CreateCouponDto, UpdateCouponDto } from "./dto/coupon.dto";
 import { Roles } from "../roles/roles.decorator";
 import { RolesGuard } from "../roles/roles.guard";
 import { UserRole } from "../common/enums/user-role.enum";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 
 @Controller("coupons")
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class CouponsController {
   constructor(private readonly couponsService: CouponsService) {}
 

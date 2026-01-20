@@ -4,9 +4,11 @@ import { UpsertSettingDto } from "./dto/settings.dto";
 import { Roles } from "../roles/roles.decorator";
 import { RolesGuard } from "../roles/roles.guard";
 import { UserRole } from "../common/enums/user-role.enum";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { Public } from "../auth/public.decorator";
 
 @Controller("settings")
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class SettingsController {
   constructor(private readonly settingsService: SettingsService) {}
 
@@ -23,6 +25,7 @@ export class SettingsController {
   }
 
   @Get("public/:key")
+  @Public()
   publicGet(@Param("key") key: string) {
     return this.settingsService.get(key);
   }

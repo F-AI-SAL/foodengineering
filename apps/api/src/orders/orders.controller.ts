@@ -6,9 +6,11 @@ import { AssignRiderDto } from "./dto/assign-rider.dto";
 import { Roles } from "../roles/roles.decorator";
 import { RolesGuard } from "../roles/roles.guard";
 import { UserRole } from "../common/enums/user-role.enum";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { Public } from "../auth/public.decorator";
 
 @Controller("orders")
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
@@ -19,7 +21,7 @@ export class OrdersController {
   }
 
   @Post()
-  @Roles(UserRole.CUSTOMER, UserRole.ADMIN, UserRole.OWNER)
+  @Public()
   create(@Body() dto: CreateOrderDto) {
     return this.ordersService.create(dto);
   }

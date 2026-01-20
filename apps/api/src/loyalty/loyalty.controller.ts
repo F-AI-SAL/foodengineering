@@ -4,9 +4,10 @@ import { AdjustPointsDto } from "./dto/loyalty.dto";
 import { Roles } from "../roles/roles.decorator";
 import { RolesGuard } from "../roles/roles.guard";
 import { UserRole } from "../common/enums/user-role.enum";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 
 @Controller("loyalty")
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class LoyaltyController {
   constructor(private readonly loyaltyService: LoyaltyService) {}
 

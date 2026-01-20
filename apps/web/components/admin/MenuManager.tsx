@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch, API_BASE } from "@/lib/api";
+import { getAuthHeaders } from "@/lib/auth";
 import type { MenuItem, MenuItemOptionChoice, MenuItemOptionGroup } from "@/lib/types";
 import { Button } from "@/components/design-system/Button";
 import { Card } from "@/components/design-system/Card";
@@ -136,7 +137,7 @@ export function MenuManager() {
       const response = await fetch(`${API_BASE}/menu/${activeItem.id}/upload`, {
         method: "POST",
         headers: {
-          "x-user-role": "admin"
+          ...getAuthHeaders()
         },
         body: formData
       });

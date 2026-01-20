@@ -7,18 +7,32 @@ import {
   MessageBody
 } from "@nestjs/websockets";
 import { Server, WebSocket } from "ws";
+import { JwtService } from "@nestjs/jwt";
+import type { IncomingMessage } from "http";
 import { TrackingService } from "./tracking.service";
 import { TrackingSubscribeDto, TrackingUpdateDto } from "./dto/tracking.dto";
+import { extractWsToken, verifyWsToken } from "../auth/ws-auth.util";
 
 @WebSocketGateway({
   path: process.env.WS_PATH ?? "/ws",
   cors: { origin: "*" }
 })
 export class TrackingGateway {
-  constructor(private readonly trackingService: TrackingService) {}
+  constructor(
+    private readonly trackingService: TrackingService,
+    private readonly jwtService: JwtService
+  ) {}
 
   @WebSocketServer()
   server!: Server;
+
+  async handleConnection(client: WebSocket, request: IncomingMessage) {
+    const token = extractWsToken(request);
+    const payload = await verifyWsToken(this.jwtService, token);
+    if (!payload) {
+      client.close(1008, "Unauthorized");
+    }
+  }
 
   handleDisconnect(client: WebSocket) {
     this.trackingService.removeClient(client);

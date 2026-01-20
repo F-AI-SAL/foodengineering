@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getAuthToken } from "../auth";
 
 export type WebSocketStatus = "idle" | "connecting" | "open" | "closed" | "error";
 
@@ -26,7 +27,9 @@ export function useWebSocket<T>(options: UseWebSocketOptions<T> = {}) {
     }
 
     setStatus("connecting");
-    const socket = new WebSocket(url);
+    const token = getAuthToken();
+    const wsUrl = token ? `${url}${url.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}` : url;
+    const socket = new WebSocket(wsUrl);
     socketRef.current = socket;
 
     socket.addEventListener("open", () => setStatus("open"));

@@ -107,6 +107,7 @@ model User {
   name         String
   phone        String?
   email        String       @unique
+  passwordHash String       @default("")
   dob          DateTime?
   role         UserRole
   createdAt    DateTime     @default(now())

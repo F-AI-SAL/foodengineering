@@ -4,9 +4,10 @@ import { CreateSegmentDto, UpdateSegmentDto } from "./dto/segment.dto";
 import { Roles } from "../roles/roles.decorator";
 import { RolesGuard } from "../roles/roles.guard";
 import { UserRole } from "../common/enums/user-role.enum";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 
 @Controller("segments")
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class SegmentsController {
   constructor(private readonly segmentsService: SegmentsService) {}
 

@@ -23,6 +23,7 @@ import { PricingModule } from "./pricing/pricing.module";
 import { GrowthModule } from "./growth/growth.module";
 import { CommonModule } from "./common/common.module";
 import { SettingsModule } from "./settings/settings.module";
+import { AuthModule } from "./auth/auth.module";
 
 @Module({
   imports: [
@@ -53,7 +54,8 @@ import { SettingsModule } from "./settings/settings.module";
     AnalyticsModule,
     PricingModule,
     GrowthModule,
-    SettingsModule
+    SettingsModule,
+    AuthModule
   ]
 })
 export class AppModule {}

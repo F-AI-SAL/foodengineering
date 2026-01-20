@@ -3,9 +3,10 @@ import { RoleConfigService } from "./role-config.service";
 import { Roles } from "./roles.decorator";
 import { RolesGuard } from "./roles.guard";
 import { UserRole } from "../common/enums/user-role.enum";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 
 @Controller("roles/config")
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class RoleConfigController {
   constructor(private readonly roleConfigService: RoleConfigService) {}
 

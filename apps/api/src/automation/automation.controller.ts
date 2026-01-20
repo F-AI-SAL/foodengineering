@@ -4,9 +4,10 @@ import { CreateAutomationDto, UpdateAutomationDto } from "./dto/automation.dto";
 import { Roles } from "../roles/roles.decorator";
 import { RolesGuard } from "../roles/roles.guard";
 import { UserRole } from "../common/enums/user-role.enum";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 
 @Controller("automation")
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AutomationController {
   constructor(private readonly automationService: AutomationService) {}
 
