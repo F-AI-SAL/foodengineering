@@ -144,6 +144,11 @@ export const ADMIN_NAV = [
     description: "Change history"
   },
   {
+    label: "Notifications",
+    href: "/admin/notifications",
+    description: "Queue status"
+  },
+  {
     label: "Growth Hub",
     href: "/admin/growth",
     description: "Upsell & tests"

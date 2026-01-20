@@ -19,8 +19,8 @@ type WhatsappPayload = {
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
-  private readonly emailProvider: "smtp" | "sendgrid" | "none";
-  private readonly whatsappProvider: "twilio" | "none";
+  readonly emailProvider: "smtp" | "sendgrid" | "none";
+  readonly whatsappProvider: "twilio" | "none";
   private readonly transporter?: nodemailer.Transporter;
   private readonly twilioClient?: Twilio;
 
