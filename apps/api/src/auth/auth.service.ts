@@ -3,6 +3,7 @@ import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import { randomBytes, createHash } from "crypto";
 import { NotificationsService } from "../notifications/notifications.service";
+import { NotificationsQueue } from "../notifications/notifications.queue";
 import { PrismaService } from "../prisma/prisma.service";
 import type { User } from "@prisma/client";
 
@@ -15,7 +16,8 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly notificationsService: NotificationsService
+    private readonly notificationsService: NotificationsService,
+    private readonly notificationsQueue: NotificationsQueue
   ) {}
 
   async validateUser(email: string, password: string): Promise<SafeUser> {
@@ -79,7 +81,13 @@ export class AuthService {
         text: message
       });
     } catch (error) {
-      this.logger.error("Email notification failed.", error as Error);
+      this.logger.warn("Email failed. Queuing retry.");
+      await this.notificationsQueue.enqueue("email", {
+        to: user.email,
+        subject: "Reset your Food Engineering password",
+        html: `<p>${message}</p>`,
+        text: message
+      });
     }
 
     if (user.phone) {
@@ -89,7 +97,8 @@ export class AuthService {
           body: message
         });
       } catch (error) {
-        this.logger.error("WhatsApp notification failed.", error as Error);
+        this.logger.warn("WhatsApp failed. Queuing retry.");
+        await this.notificationsQueue.enqueue("whatsapp", { to: user.phone, body: message });
       }
     }
 

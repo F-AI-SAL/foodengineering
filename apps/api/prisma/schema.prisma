@@ -102,6 +102,13 @@ enum ExperimentStatus {
   paused
 }
 
+enum NotificationJobStatus {
+  queued
+  processing
+  sent
+  failed
+}
+
 model User {
   id           String       @id @default(uuid())
   name         String
@@ -128,6 +135,20 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+model NotificationJob {
+  id          String                @id @default(uuid())
+  channel     String
+  payloadJson Json
+  status      NotificationJobStatus @default(queued)
+  attempts    Int                   @default(0)
+  scheduledAt DateTime              @default(now())
+  sentAt      DateTime?
+  lastError   String?
+  createdAt   DateTime              @default(now())
+
+  @@index([status, scheduledAt])
 }
 
 model MenuItem {

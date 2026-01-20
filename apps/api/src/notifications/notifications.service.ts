@@ -100,7 +100,7 @@ export class NotificationsService {
       }
     } catch (error) {
       this.logger.error("Email delivery failed.", error as Error);
-      return;
+      throw error;
     }
 
     this.logger.warn("Email provider misconfigured. No email sent.");
@@ -131,6 +131,7 @@ export class NotificationsService {
       });
     } catch (error) {
       this.logger.error("WhatsApp delivery failed.", error as Error);
+      throw error;
     }
   }
 }
