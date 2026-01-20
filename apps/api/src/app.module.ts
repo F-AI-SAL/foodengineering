@@ -1,7 +1,5 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { ServeStaticModule } from "@nestjs/serve-static";
-import { join } from "path";
 import { ScheduleModule } from "@nestjs/schedule";
 import configuration from "./config/configuration";
 import { PrismaModule } from "./prisma/prisma.module";
@@ -25,16 +23,14 @@ import { CommonModule } from "./common/common.module";
 import { SettingsModule } from "./settings/settings.module";
 import { AuthModule } from "./auth/auth.module";
 import { NotificationsModule } from "./notifications/notifications.module";
+import { UploadsModule } from "./uploads/uploads.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [configuration]
-    }),
-    ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), "uploads"),
-      serveRoot: "/uploads"
+      load: [configuration],
+      envFilePath: [".env.local", ".env"]
     }),
     ScheduleModule.forRoot(),
     PrismaModule,
@@ -57,7 +53,8 @@ import { NotificationsModule } from "./notifications/notifications.module";
     GrowthModule,
     SettingsModule,
     AuthModule,
-    NotificationsModule
+    NotificationsModule,
+    UploadsModule
   ]
 })
 export class AppModule {}

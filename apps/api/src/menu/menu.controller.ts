@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Query,
   Patch,
   Param,
   Post,
@@ -11,10 +12,7 @@ import {
   UseInterceptors
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { diskStorage } from "multer";
-import type { Request } from "express";
-import { extname, join } from "path";
-import { mkdirSync } from "fs";
+import { memoryStorage } from "multer";
 import { MenuService } from "./menu.service";
 import { CreateMenuItemDto, UpdateMenuItemDto } from "./dto/menu-item.dto";
 import { Roles } from "../roles/roles.decorator";
@@ -22,16 +20,26 @@ import { RolesGuard } from "../roles/roles.guard";
 import { UserRole } from "../common/enums/user-role.enum";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { Public } from "../auth/public.decorator";
+import { PaginationQuery } from "../common/dto/pagination.dto";
+import { UploadsService } from "../uploads/uploads.service";
+
+const MAX_UPLOAD_BYTES = Number(process.env.UPLOAD_MAX_MB ?? "10") * 1024 * 1024;
+const ALLOWED_MIME = (process.env.UPLOAD_ALLOWED_MIME ?? "image/jpeg,image/png,image/svg+xml,application/pdf")
+  .split(",")
+  .map((value) => value.trim());
 
 @Controller("menu")
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class MenuController {
-  constructor(private readonly menuService: MenuService) {}
+  constructor(
+    private readonly menuService: MenuService,
+    private readonly uploadsService: UploadsService
+  ) {}
 
   @Get()
   @Public()
-  findAll() {
-    return this.menuService.findAll();
+  findAll(@Query() query: PaginationQuery) {
+    return this.menuService.findAll(query);
   }
 
   @Post()
@@ -50,43 +58,14 @@ export class MenuController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.OWNER)
   @UseInterceptors(
     FileInterceptor("file", {
-      storage: diskStorage({
-        destination: (
-          _req: Request,
-          _file: Express.Multer.File,
-          cb: (error: Error | null, destination: string) => void
-        ) => {
-          const uploadPath = join(process.cwd(), "uploads", "menu");
-          mkdirSync(uploadPath, { recursive: true });
-          cb(null, uploadPath);
-        },
-        filename: (
-          _req: Request,
-          file: Express.Multer.File,
-          cb: (error: Error | null, filename: string) => void
-        ) => {
-          const safeExt = extname(file.originalname).toLowerCase();
-          const fileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${safeExt}`;
-          cb(null, fileName);
+      storage: memoryStorage(),
+      fileFilter: (_req, file, cb) => {
+        if (ALLOWED_MIME.includes(file.mimetype)) {
+          return cb(null, true);
         }
-      }),
-      fileFilter: (
-        _req: Request,
-        file: Express.Multer.File,
-        cb: (error: Error | null, acceptFile: boolean) => void
-      ) => {
-        const allowed = [
-          "image/jpeg",
-          "image/png",
-          "image/svg+xml",
-          "application/pdf"
-        ];
-        if (!allowed.includes(file.mimetype)) {
-          return cb(new Error("Only JPEG, PNG, SVG, or PDF files are allowed."), false);
-        }
-        return cb(null, true);
+        return cb(new Error("Unsupported file type."), false);
       },
-      limits: { fileSize: 10 * 1024 * 1024 }
+      limits: { fileSize: MAX_UPLOAD_BYTES }
     })
   )
   async upload(@Param("id") id: string, @UploadedFile() file?: Express.Multer.File) {
@@ -94,7 +73,7 @@ export class MenuController {
       throw new BadRequestException("File is required.");
     }
 
-    const url = `/uploads/menu/${file.filename}`;
+    const { url } = await this.uploadsService.uploadMenuAsset(file);
     return this.menuService.updateImage(id, url);
   }
 }
