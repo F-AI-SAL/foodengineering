@@ -73,3 +73,20 @@ Web will be on `http://localhost:3000`.
 - Frontend production: `apps/web/.env.production.example`
 
 Copy the local template to `.env` or `.env.local` before running.
+
+## Deployment (Enterprise Baseline)
+
+### Web (Vercel)
+1) Set Vercel root directory to `apps/web` (Project Settings → Root Directory).
+2) Add env vars from `apps/web/.env.production.example`.
+3) Build command is already set in `vercel.json`.
+
+### API (Render)
+1) Use `render.yaml` at repo root.
+2) Set env vars from `apps/api/.env.production.example`.
+3) `healthCheckPath` is `/health`.
+
+### API (Railway)
+1) Use `railway.json` at repo root.
+2) Set env vars from `apps/api/.env.production.example`.
+3) Start command uses `npm run start:prod`.

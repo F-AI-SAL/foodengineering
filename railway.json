@@ -1,0 +1,11 @@
+{
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "cd apps/api && npm ci && npm run build"
+  },
+  "deploy": {
+    "startCommand": "cd apps/api && npm run start:prod",
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 120
+  }
+}

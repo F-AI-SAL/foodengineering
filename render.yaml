@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: food-engineering-api
+    runtime: node
+    rootDir: apps/api
+    plan: starter
+    autoDeploy: true
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: STORAGE_PROVIDER
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
