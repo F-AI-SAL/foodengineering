@@ -76,25 +76,30 @@ export class NotificationsService {
 
     const from = this.config.get<string>("EMAIL_FROM") ?? "no-reply@foodengineering.com";
 
-    if (this.emailProvider === "sendgrid") {
-      await sgMail.send({
-        to: payload.to,
-        from,
-        subject: payload.subject,
-        html: payload.html,
-        text: payload.text
-      });
-      return;
-    }
+    try {
+      if (this.emailProvider === "sendgrid") {
+        await sgMail.send({
+          to: payload.to,
+          from,
+          subject: payload.subject,
+          html: payload.html,
+          text: payload.text
+        });
+        return;
+      }
 
-    if (this.emailProvider === "smtp" && this.transporter) {
-      await this.transporter.sendMail({
-        to: payload.to,
-        from,
-        subject: payload.subject,
-        html: payload.html,
-        text: payload.text
-      });
+      if (this.emailProvider === "smtp" && this.transporter) {
+        await this.transporter.sendMail({
+          to: payload.to,
+          from,
+          subject: payload.subject,
+          html: payload.html,
+          text: payload.text
+        });
+        return;
+      }
+    } catch (error) {
+      this.logger.error("Email delivery failed.", error as Error);
       return;
     }
 
@@ -118,10 +123,14 @@ export class NotificationsService {
       return;
     }
 
-    await this.twilioClient.messages.create({
-      to: `whatsapp:${payload.to}`,
-      from: `whatsapp:${from}`,
-      body: payload.body
-    });
+    try {
+      await this.twilioClient.messages.create({
+        to: `whatsapp:${payload.to}`,
+        from: `whatsapp:${from}`,
+        body: payload.body
+      });
+    } catch (error) {
+      this.logger.error("WhatsApp delivery failed.", error as Error);
+    }
   }
 }

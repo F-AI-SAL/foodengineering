@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import { randomBytes, createHash } from "crypto";
@@ -10,6 +10,8 @@ type SafeUser = Omit<User, "passwordHash">;
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -69,18 +71,26 @@ export class AuthService {
     const resetUrl = `${appUrl}/admin/login?reset=${rawToken}`;
     const message = `Use this link to reset your password: ${resetUrl}`;
 
-    await this.notificationsService.sendEmail({
-      to: user.email,
-      subject: "Reset your Food Engineering password",
-      html: `<p>${message}</p>`,
-      text: message
-    });
+    try {
+      await this.notificationsService.sendEmail({
+        to: user.email,
+        subject: "Reset your Food Engineering password",
+        html: `<p>${message}</p>`,
+        text: message
+      });
+    } catch (error) {
+      this.logger.error("Email notification failed.", error as Error);
+    }
 
     if (user.phone) {
-      await this.notificationsService.sendWhatsApp({
-        to: user.phone,
-        body: message
-      });
+      try {
+        await this.notificationsService.sendWhatsApp({
+          to: user.phone,
+          body: message
+        });
+      } catch (error) {
+        this.logger.error("WhatsApp notification failed.", error as Error);
+      }
     }
 
     return response;
