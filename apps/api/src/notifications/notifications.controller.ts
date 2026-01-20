@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { NotificationsService } from "./notifications.service";
 import { Roles } from "../roles/roles.decorator";
 import { RolesGuard } from "../roles/roles.guard";
@@ -6,6 +7,7 @@ import { UserRole } from "../common/enums/user-role.enum";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificationsQueue } from "./notifications.queue";
+import { NotificationTestDto } from "./dto/notification-test.dto";
 
 @Controller("notifications")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -13,7 +15,8 @@ export class NotificationsController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
-    private readonly notificationsQueue: NotificationsQueue
+    private readonly notificationsQueue: NotificationsQueue,
+    private readonly config: ConfigService
   ) {}
 
   @Get("status")
@@ -52,5 +55,25 @@ export class NotificationsController {
       data: { status: "queued", scheduledAt: new Date() }
     });
     return { message: "Failed jobs re-queued." };
+  }
+
+  @Post("test")
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.OWNER)
+  async sendTest(@Body() dto: NotificationTestDto) {
+    const recipient =
+      dto.email ?? this.config.get<string>("NOTIFICATION_TEST_EMAIL") ?? undefined;
+
+    if (!recipient) {
+      throw new BadRequestException("NOTIFICATION_TEST_EMAIL is not set.");
+    }
+
+    await this.notificationsQueue.enqueue("email", {
+      to: recipient,
+      subject: "Food Engineering notification test",
+      text: "This is a test notification from Food Engineering.",
+      html: "<p>This is a test notification from <strong>Food Engineering</strong>.</p>"
+    });
+
+    return { message: "Test email queued.", to: recipient };
   }
 }

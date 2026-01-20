@@ -8,8 +8,19 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
 
+  const corsOriginRaw = config.get<string>("CORS_ORIGIN");
+  if (!corsOriginRaw || !corsOriginRaw.trim()) {
+    throw new Error(
+      "CORS_ORIGIN is required. Set a comma-separated allowlist (e.g. https://admin.example.com,https://app.example.com)."
+    );
+  }
+  const corsOrigins = corsOriginRaw
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+
   app.enableCors({
-    origin: config.get<string>("CORS_ORIGIN") ?? "*",
+    origin: corsOrigins,
     credentials: true
   });
   app.useWebSocketAdapter(new WsAdapter(app));

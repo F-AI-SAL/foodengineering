@@ -31,7 +31,7 @@ export class AuthService {
       throw new UnauthorizedException("Invalid credentials.");
     }
 
-    const { passwordHash, ...safe } = user;
+    const { passwordHash: _passwordHash, ...safe } = user;
     return safe;
   }
 
@@ -80,7 +80,7 @@ export class AuthService {
         html: `<p>${message}</p>`,
         text: message
       });
-    } catch (error) {
+    } catch (_error) {
       this.logger.warn("Email failed. Queuing retry.");
       await this.notificationsQueue.enqueue("email", {
         to: user.email,
@@ -96,7 +96,7 @@ export class AuthService {
           to: user.phone,
           body: message
         });
-      } catch (error) {
+      } catch (_error) {
         this.logger.warn("WhatsApp failed. Queuing retry.");
         await this.notificationsQueue.enqueue("whatsapp", { to: user.phone, body: message });
       }
