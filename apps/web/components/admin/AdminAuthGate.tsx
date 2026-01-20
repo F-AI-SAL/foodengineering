@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/admin/Sidebar";
 import { getAuthToken } from "@/lib/auth";
@@ -14,22 +14,29 @@ export function AdminAuthGate({ children }: AdminAuthGateProps) {
   const pathname = usePathname();
   const router = useRouter();
   const isLogin = pathname === "/admin/login";
+  const [mounted, setMounted] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
+    setMounted(true);
     if (isLogin) {
       return;
     }
-    const token = getAuthToken();
-    if (!token) {
+    const nextToken = getAuthToken();
+    setToken(nextToken);
+    if (!nextToken) {
       router.replace("/admin/login");
     }
   }, [isLogin, router]);
+
+  if (!mounted) {
+    return <div className="min-h-screen bg-surface px-lg py-2xl">Checking session...</div>;
+  }
 
   if (isLogin) {
     return <div className="min-h-screen bg-surface px-lg py-2xl">{children}</div>;
   }
 
-  const token = getAuthToken();
   if (!token) {
     return <div className="min-h-screen bg-surface px-lg py-2xl">Checking session...</div>;
   }
