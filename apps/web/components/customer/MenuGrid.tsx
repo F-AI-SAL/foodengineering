@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { menuItems as fallbackMenuItems } from "@/lib/data";
-import { publicFetch } from "@/lib/api";
+import { publicFetchList } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/design-system/Badge";
 import { Button } from "@/components/design-system/Button";
@@ -24,9 +24,9 @@ export function MenuGrid() {
   useEffect(() => {
     let active = true;
 
-    publicFetch<typeof fallbackMenuItems>("/menu")
+    publicFetchList<typeof fallbackMenuItems[number]>("/menu")
       .then((data) => {
-        if (active && Array.isArray(data) && data.length) {
+        if (active && data.length) {
           setItems(data);
         }
       })

@@ -1,13 +1,24 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateCouponDto, UpdateCouponDto } from "./dto/coupon.dto";
+import { PaginationQuery } from "../common/dto/pagination.dto";
+import { buildPaginatedResult, normalizePagination } from "../common/pagination";
 
 @Injectable()
 export class CouponsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
-    return this.prisma.coupon.findMany({ orderBy: { createdAt: "desc" } });
+  async findAll(query: PaginationQuery) {
+    const { page, pageSize, skip, take } = normalizePagination(query);
+    const [data, total] = await Promise.all([
+      this.prisma.coupon.findMany({
+        orderBy: { createdAt: "desc" },
+        skip,
+        take
+      }),
+      this.prisma.coupon.count()
+    ]);
+    return buildPaginatedResult(data, total, page, pageSize);
   }
 
   async create(dto: CreateCouponDto) {

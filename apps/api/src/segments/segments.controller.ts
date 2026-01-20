@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Patch, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Patch, Param, Post, Query, UseGuards } from "@nestjs/common";
 import { SegmentsService } from "./segments.service";
 import { CreateSegmentDto, UpdateSegmentDto } from "./dto/segment.dto";
 import { Roles } from "../roles/roles.decorator";
 import { RolesGuard } from "../roles/roles.guard";
 import { UserRole } from "../common/enums/user-role.enum";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { PaginationQuery } from "../common/dto/pagination.dto";
 
 @Controller("segments")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -13,8 +14,8 @@ export class SegmentsController {
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.OWNER)
-  findAll() {
-    return this.segmentsService.findAll();
+  findAll(@Query() query: PaginationQuery) {
+    return this.segmentsService.findAll(query);
   }
 
   @Post()

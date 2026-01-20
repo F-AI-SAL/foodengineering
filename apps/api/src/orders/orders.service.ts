@@ -3,18 +3,28 @@ import { PrismaService } from "../prisma/prisma.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { UpdateOrderStatusDto } from "./dto/update-order-status.dto";
 import { AssignRiderDto } from "./dto/assign-rider.dto";
+import { PaginationQuery } from "../common/dto/pagination.dto";
+import { buildPaginatedResult, normalizePagination } from "../common/pagination";
 
 @Injectable()
 export class OrdersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
-    return this.prisma.order.findMany({
-      include: {
-        items: true
-      },
-      orderBy: { createdAt: "desc" }
-    });
+  async findAll(query: PaginationQuery) {
+    const { page, pageSize, skip, take } = normalizePagination(query);
+    const [data, total] = await Promise.all([
+      this.prisma.order.findMany({
+        include: {
+          items: true
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take
+      }),
+      this.prisma.order.count()
+    ]);
+
+    return buildPaginatedResult(data, total, page, pageSize);
   }
 
   async create(dto: CreateOrderDto) {

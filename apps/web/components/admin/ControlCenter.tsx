@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { MenuItem, RiderStatus, Segment, UserRole } from "@/lib/types";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiFetchList } from "@/lib/api";
 import { ROLE_CONFIG } from "@/lib/config";
 import { Button } from "@/components/design-system/Button";
 import { Card } from "@/components/design-system/Card";
@@ -103,11 +103,11 @@ export function ControlCenter() {
       try {
         setLoading(true);
         const [settings, menu, riderRows, segmentRows, roleConfigs] = await Promise.all([
-          apiFetch<SettingRecord[]>("/settings"),
-          apiFetch<MenuItem[]>("/menu"),
-          apiFetch<any[]>("/riders"),
-          apiFetch<Segment[]>("/segments"),
-          apiFetch<RoleConfigRecord[]>("/roles/config")
+          apiFetchList<SettingRecord>("/settings"),
+          apiFetchList<MenuItem>("/menu"),
+          apiFetchList<any>("/riders"),
+          apiFetchList<Segment>("/segments"),
+          apiFetchList<RoleConfigRecord>("/roles/config")
         ]);
 
         if (!active) {

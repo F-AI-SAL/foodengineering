@@ -38,7 +38,7 @@ API will be on `http://localhost:4000`.
 
 ### 6) Authentication (Admin)
 Seeded admin login (for local dev):
-- Email: `admin@foodengineering.com`
+- Email: `islammdfaisalal@gmail.com`
 - Password: `Admin@123`
 
 Get a token:
@@ -48,7 +48,7 @@ POST http://localhost:4000/auth/login
 Body:
 ```json
 {
-  "email": "admin@foodengineering.com",
+  "email": "islammdfaisalal@gmail.com",
   "password": "Admin@123"
 }
 ```
@@ -65,5 +65,11 @@ npm run dev
 Web will be on `http://localhost:3000`.
 
 ### 7) Env templates
-- Backend: `apps/api/.env.example`
-- Frontend: `apps/web/.env.example`
+- Backend base: `apps/api/.env.example`
+- Backend local: `apps/api/.env.local.example`
+- Backend production: `apps/api/.env.production.example`
+- Frontend base: `apps/web/.env.example`
+- Frontend local: `apps/web/.env.local.example`
+- Frontend production: `apps/web/.env.production.example`
+
+Copy the local template to `.env` or `.env.local` before running.

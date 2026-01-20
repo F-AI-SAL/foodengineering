@@ -1,16 +1,25 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { UpdateRiderProfileDto } from "./dto/update-rider.dto";
+import { PaginationQuery } from "../common/dto/pagination.dto";
+import { buildPaginatedResult, normalizePagination } from "../common/pagination";
 
 @Injectable()
 export class RidersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
-    return this.prisma.riderProfile.findMany({
-      include: { user: true },
-      orderBy: { updatedAt: "desc" }
-    });
+  async findAll(query: PaginationQuery) {
+    const { page, pageSize, skip, take } = normalizePagination(query);
+    const [data, total] = await Promise.all([
+      this.prisma.riderProfile.findMany({
+        include: { user: true },
+        orderBy: { updatedAt: "desc" },
+        skip,
+        take
+      }),
+      this.prisma.riderProfile.count()
+    ]);
+    return buildPaginatedResult(data, total, page, pageSize);
   }
 
   async updateProfile(userId: string, dto: UpdateRiderProfileDto) {

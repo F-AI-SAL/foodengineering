@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
 import { SettingsService } from "./settings.service";
 import { UpsertSettingDto } from "./dto/settings.dto";
 import { Roles } from "../roles/roles.decorator";
 import { RolesGuard } from "../roles/roles.guard";
 import { UserRole } from "../common/enums/user-role.enum";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { PaginationQuery } from "../common/dto/pagination.dto";
 import { Public } from "../auth/public.decorator";
 
 @Controller("settings")
@@ -14,8 +15,8 @@ export class SettingsController {
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.OWNER)
-  list() {
-    return this.settingsService.list();
+  list(@Query() query: PaginationQuery) {
+    return this.settingsService.list(query);
   }
 
   @Get(":key")

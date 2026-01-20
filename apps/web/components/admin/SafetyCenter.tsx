@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiFetchList } from "@/lib/api";
 import { Card } from "@/components/design-system/Card";
 import { Button } from "@/components/design-system/Button";
 import { FieldWrapper, Input, Select } from "@/components/design-system/Form";
@@ -31,7 +31,7 @@ export function SafetyCenter() {
 
   useEffect(() => {
     let active = true;
-    apiFetch<SettingRecord[]>("/settings")
+    apiFetchList<SettingRecord>("/settings")
       .then((data) => {
         if (!active) {
           return;

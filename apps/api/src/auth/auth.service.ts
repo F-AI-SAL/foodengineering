@@ -2,6 +2,7 @@ import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import { randomBytes, createHash } from "crypto";
+import { ConfigService } from "@nestjs/config";
 import { NotificationsService } from "../notifications/notifications.service";
 import { NotificationsQueue } from "../notifications/notifications.queue";
 import { PrismaService } from "../prisma/prisma.service";
@@ -16,6 +17,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly config: ConfigService,
     private readonly notificationsService: NotificationsService,
     private readonly notificationsQueue: NotificationsQueue
   ) {}
@@ -69,7 +71,10 @@ export class AuthService {
       response.resetToken = rawToken;
     }
 
-    const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+    const appUrl = this.config.get<string>("APP_URL");
+    if (!appUrl) {
+      throw new UnauthorizedException("APP_URL is not configured.");
+    }
     const resetUrl = `${appUrl}/admin/login?reset=${rawToken}`;
     const message = `Use this link to reset your password: ${resetUrl}`;
 

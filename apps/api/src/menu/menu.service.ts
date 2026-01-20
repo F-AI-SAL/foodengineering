@@ -3,6 +3,8 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateMenuItemDto, UpdateMenuItemDto } from "./dto/menu-item.dto";
 import { MenuGateway } from "./menu.gateway";
+import { PaginationQuery } from "../common/dto/pagination.dto";
+import { buildPaginatedResult, normalizePagination } from "../common/pagination";
 
 @Injectable()
 export class MenuService {
@@ -11,8 +13,13 @@ export class MenuService {
     private readonly menuGateway: MenuGateway
   ) {}
 
-  async findAll() {
-    return this.prisma.menuItem.findMany({ orderBy: { createdAt: "desc" } });
+  async findAll(query: PaginationQuery) {
+    const { page, pageSize, skip, take } = normalizePagination(query);
+    const [data, total] = await Promise.all([
+      this.prisma.menuItem.findMany({ orderBy: { createdAt: "desc" }, skip, take }),
+      this.prisma.menuItem.count()
+    ]);
+    return buildPaginatedResult(data, total, page, pageSize);
   }
 
   async create(dto: CreateMenuItemDto) {

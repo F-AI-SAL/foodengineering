@@ -2,13 +2,24 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateReservationDto } from "./dto/create-reservation.dto";
 import { UpdateReservationStatusDto } from "./dto/update-reservation-status.dto";
+import { PaginationQuery } from "../common/dto/pagination.dto";
+import { buildPaginatedResult, normalizePagination } from "../common/pagination";
 
 @Injectable()
 export class ReservationsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
-    return this.prisma.reservation.findMany({ orderBy: { createdAt: "desc" } });
+  async findAll(query: PaginationQuery) {
+    const { page, pageSize, skip, take } = normalizePagination(query);
+    const [data, total] = await Promise.all([
+      this.prisma.reservation.findMany({
+        orderBy: { createdAt: "desc" },
+        skip,
+        take
+      }),
+      this.prisma.reservation.count()
+    ]);
+    return buildPaginatedResult(data, total, page, pageSize);
   }
 
   async create(dto: CreateReservationDto) {

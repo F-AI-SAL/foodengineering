@@ -3,6 +3,8 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateAutomationDto, UpdateAutomationDto } from "./dto/automation.dto";
 import { AutomationQueueService } from "./automation-queue.service";
+import { PaginationQuery } from "../common/dto/pagination.dto";
+import { buildPaginatedResult, normalizePagination } from "../common/pagination";
 
 @Injectable()
 export class AutomationService {
@@ -11,11 +13,18 @@ export class AutomationService {
     private readonly queue: AutomationQueueService
   ) {}
 
-  findAll() {
-    return this.prisma.automationRule.findMany({
-      include: { executions: true },
-      orderBy: { createdAt: "desc" }
-    });
+  async findAll(query: PaginationQuery) {
+    const { page, pageSize, skip, take } = normalizePagination(query);
+    const [data, total] = await Promise.all([
+      this.prisma.automationRule.findMany({
+        include: { executions: true },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take
+      }),
+      this.prisma.automationRule.count()
+    ]);
+    return buildPaginatedResult(data, total, page, pageSize);
   }
 
   create(dto: CreateAutomationDto) {

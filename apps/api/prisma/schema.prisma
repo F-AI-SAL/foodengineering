@@ -184,6 +184,11 @@ model Order {
   trackingUpdates TrackingUpdate[]
   chatThreads     ChatThread[]
   redemptions     Redemption[]
+
+  @@index([customerId])
+  @@index([status, createdAt])
+  @@index([assignedRiderId])
+  @@index([createdAt])
 }
 
 model OrderItem {
@@ -209,6 +214,9 @@ model Reservation {
   status     ReservationStatus  @default(pending)
   notes      String?
   createdAt  DateTime           @default(now())
+
+  @@index([status, createdAt])
+  @@index([customerId])
 }
 
 model RiderProfile {
@@ -239,6 +247,9 @@ model ChatThread {
   status    ChatThreadStatus @default(open)
   createdAt DateTime         @default(now())
   messages  ChatMessage[]
+
+  @@index([orderId])
+  @@index([status, createdAt])
 }
 
 model ChatMessage {
@@ -249,6 +260,8 @@ model ChatMessage {
   senderName String
   message    String
   createdAt  DateTime @default(now())
+
+  @@index([threadId, createdAt])
 }
 
 model CustomerProfile {
@@ -311,6 +324,12 @@ model Redemption {
   coupon       Coupon?    @relation(fields: [couponId], references: [id])
   promotion    Promotion? @relation(fields: [promotionId], references: [id])
   order        Order?     @relation(fields: [orderId], references: [id])
+
+  @@index([couponId])
+  @@index([promotionId])
+  @@index([orderId])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model Segment {
@@ -319,6 +338,9 @@ model Segment {
   definitionJson Json
   isDynamic      Boolean  @default(true)
   createdAt      DateTime @default(now())
+
+  @@index([name])
+  @@index([isDynamic, createdAt])
 }
 
 model AutomationRule {
@@ -342,6 +364,9 @@ model AutomationExecution {
   outputJson  Json?
   errorMessage String?
   createdAt   DateTime                 @default(now())
+
+  @@index([ruleId, createdAt])
+  @@index([status, createdAt])
 }
 
 model AuditLog {

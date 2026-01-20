@@ -21,7 +21,7 @@ type UploadResult = {
 
 @Injectable()
 export class UploadsService {
-  private readonly provider: "s3" | "cloudinary";
+  private readonly provider: "s3" | "cloudinary" | "disabled";
   private readonly s3?: S3Client;
   private readonly s3Bucket?: string;
   private readonly s3PublicBase?: string;
@@ -34,7 +34,8 @@ export class UploadsService {
   constructor(private readonly config: ConfigService) {
     this.provider = (this.config.get<string>("STORAGE_PROVIDER") ?? "s3") as
       | "s3"
-      | "cloudinary";
+      | "cloudinary"
+      | "disabled";
     this.maxBytes = Number(this.config.get<string>("UPLOAD_MAX_MB") ?? "10") * 1024 * 1024;
     const allowed =
       this.config.get<string>("UPLOAD_ALLOWED_MIME") ??
@@ -75,6 +76,9 @@ export class UploadsService {
   }
 
   async uploadMenuAsset(file: Express.Multer.File): Promise<UploadResult> {
+    if (this.provider === "disabled") {
+      throw new InternalServerErrorException("Uploads are disabled.");
+    }
     if (!file?.buffer) {
       throw new InternalServerErrorException("Upload buffer missing.");
     }

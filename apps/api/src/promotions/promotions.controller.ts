@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Patch, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Patch, Param, Post, Query, UseGuards } from "@nestjs/common";
 import { PromotionsService } from "./promotions.service";
 import { CreatePromotionDto, UpdatePromotionDto } from "./dto/promotion.dto";
 import { Roles } from "../roles/roles.decorator";
 import { RolesGuard } from "../roles/roles.guard";
 import { UserRole } from "../common/enums/user-role.enum";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { PaginationQuery } from "../common/dto/pagination.dto";
 
 @Controller("promotions")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -13,8 +14,8 @@ export class PromotionsController {
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.OWNER)
-  findAll() {
-    return this.promotionsService.findAll();
+  findAll(@Query() query: PaginationQuery) {
+    return this.promotionsService.findAll(query);
   }
 
   @Post()

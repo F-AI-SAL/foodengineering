@@ -2,13 +2,24 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreatePromotionDto, UpdatePromotionDto } from "./dto/promotion.dto";
+import { PaginationQuery } from "../common/dto/pagination.dto";
+import { buildPaginatedResult, normalizePagination } from "../common/pagination";
 
 @Injectable()
 export class PromotionsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
-    return this.prisma.promotion.findMany({ orderBy: { createdAt: "desc" } });
+  async findAll(query: PaginationQuery) {
+    const { page, pageSize, skip, take } = normalizePagination(query);
+    const [data, total] = await Promise.all([
+      this.prisma.promotion.findMany({
+        orderBy: { createdAt: "desc" },
+        skip,
+        take
+      }),
+      this.prisma.promotion.count()
+    ]);
+    return buildPaginatedResult(data, total, page, pageSize);
   }
 
   async create(dto: CreatePromotionDto) {

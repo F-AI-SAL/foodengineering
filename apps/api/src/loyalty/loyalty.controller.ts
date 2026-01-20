@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
 import { LoyaltyService } from "./loyalty.service";
 import { AdjustPointsDto } from "./dto/loyalty.dto";
 import { Roles } from "../roles/roles.decorator";
 import { RolesGuard } from "../roles/roles.guard";
 import { UserRole } from "../common/enums/user-role.enum";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { PaginationQuery } from "../common/dto/pagination.dto";
 
 @Controller("loyalty")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -19,8 +20,8 @@ export class LoyaltyController {
 
   @Get("members")
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.OWNER)
-  members() {
-    return this.loyaltyService.getMembers();
+  members(@Query() query: PaginationQuery) {
+    return this.loyaltyService.getMembers(query);
   }
 
   @Post("adjust")

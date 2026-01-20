@@ -14,7 +14,7 @@ export function extractWsToken(request: IncomingMessage): string | null {
 
   const url = request.url ?? "";
   try {
-    const parsed = new URL(url, "http://localhost");
+    const parsed = new URL(url, "http://invalid");
     return parsed.searchParams.get("token");
   } catch {
     return null;

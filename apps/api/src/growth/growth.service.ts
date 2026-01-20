@@ -2,13 +2,20 @@ import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateExperimentDto, CreateUpsellRuleDto } from "./dto/growth.dto";
+import { PaginationQuery } from "../common/dto/pagination.dto";
+import { buildPaginatedResult, normalizePagination } from "../common/pagination";
 
 @Injectable()
 export class GrowthService {
   constructor(private readonly prisma: PrismaService) {}
 
-  getUpsellRules() {
-    return this.prisma.upsellRule.findMany({ orderBy: { createdAt: "desc" } });
+  async getUpsellRules(query: PaginationQuery) {
+    const { page, pageSize, skip, take } = normalizePagination(query);
+    const [data, total] = await Promise.all([
+      this.prisma.upsellRule.findMany({ orderBy: { createdAt: "desc" }, skip, take }),
+      this.prisma.upsellRule.count()
+    ]);
+    return buildPaginatedResult(data, total, page, pageSize);
   }
 
   createUpsell(dto: CreateUpsellRuleDto) {
@@ -23,8 +30,13 @@ export class GrowthService {
     });
   }
 
-  getExperiments() {
-    return this.prisma.experiment.findMany({ include: { variants: true } });
+  async getExperiments(query: PaginationQuery) {
+    const { page, pageSize, skip, take } = normalizePagination(query);
+    const [data, total] = await Promise.all([
+      this.prisma.experiment.findMany({ include: { variants: true }, skip, take }),
+      this.prisma.experiment.count()
+    ]);
+    return buildPaginatedResult(data, total, page, pageSize);
   }
 
   createExperiment(dto: CreateExperimentDto) {

@@ -16,12 +16,14 @@ interface UseWebSocketOptions<T> {
 }
 
 export function useWebSocket<T>(options: UseWebSocketOptions<T> = {}) {
-  const { url = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:4000/ws", onMessage } = options;
+  const envUrl = process.env.NEXT_PUBLIC_WS_URL;
+  const { url = envUrl, onMessage } = options;
   const socketRef = useRef<WebSocket | null>(null);
   const [status, setStatus] = useState<WebSocketStatus>("idle");
 
   useEffect(() => {
     if (!url) {
+      throw new Error("NEXT_PUBLIC_WS_URL is required.");
       setStatus("error");
       return undefined;
     }

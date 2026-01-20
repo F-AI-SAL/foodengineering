@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Patch, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Patch, Param, Post, Query, UseGuards } from "@nestjs/common";
 import { AutomationService } from "./automation.service";
 import { CreateAutomationDto, UpdateAutomationDto } from "./dto/automation.dto";
 import { Roles } from "../roles/roles.decorator";
 import { RolesGuard } from "../roles/roles.guard";
 import { UserRole } from "../common/enums/user-role.enum";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { PaginationQuery } from "../common/dto/pagination.dto";
 
 @Controller("automation")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -13,8 +14,8 @@ export class AutomationController {
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.OWNER)
-  findAll() {
-    return this.automationService.findAll();
+  findAll(@Query() query: PaginationQuery) {
+    return this.automationService.findAll(query);
   }
 
   @Post()

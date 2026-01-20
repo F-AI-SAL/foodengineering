@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { AdjustPointsDto } from "./dto/loyalty.dto";
+import { PaginationQuery } from "../common/dto/pagination.dto";
+import { buildPaginatedResult, normalizePagination } from "../common/pagination";
 
 @Injectable()
 export class LoyaltyService {
@@ -28,11 +30,18 @@ export class LoyaltyService {
     return normalized;
   }
 
-  async getMembers() {
-    return this.prisma.customerProfile.findMany({
-      include: { user: true },
-      orderBy: { points: "desc" }
-    });
+  async getMembers(query: PaginationQuery) {
+    const { page, pageSize, skip, take } = normalizePagination(query);
+    const [data, total] = await Promise.all([
+      this.prisma.customerProfile.findMany({
+        include: { user: true },
+        orderBy: { points: "desc" },
+        skip,
+        take
+      }),
+      this.prisma.customerProfile.count()
+    ]);
+    return buildPaginatedResult(data, total, page, pageSize);
   }
 
   async adjustPoints(dto: AdjustPointsDto) {
