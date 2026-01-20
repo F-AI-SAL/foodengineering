@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiFetchList, apiFetchPage } from "@/lib/api";
 import type { Rider } from "@/lib/types";
 
 type OrderRow = {
@@ -18,6 +18,7 @@ import { StatusBadge } from "@/components/design-system/Badge";
 import { Button } from "@/components/design-system/Button";
 import { Select } from "@/components/design-system/Form";
 import { Card } from "@/components/design-system/Card";
+import { PaginationControls } from "@/components/design-system/Pagination";
 import { EmptyState, ErrorState, LoadingState } from "@/components/design-system/States";
 
 export function OrdersTable() {
@@ -26,6 +27,10 @@ export function OrdersTable() {
   const [selectedOrders, setSelectedOrders] = useState<Record<string, string | undefined>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const statusOrder = useMemo(
     () => ["pending", "confirmed", "preparing", "ready", "on_delivery", "delivered", "cancelled"],
@@ -34,12 +39,12 @@ export function OrdersTable() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([apiFetch<OrderRow[]>("/orders"), apiFetch<any[]>("/riders")])
-      .then(([orderRows, riderRows]) => {
+    Promise.all([apiFetchPage<OrderRow>("/orders", {}, page, pageSize), apiFetchList<any>("/riders", {}, 1, 200)])
+      .then(([ordersPage, riderRows]) => {
         if (!active) {
           return;
         }
-        const normalizedOrders = orderRows.map((order) => ({
+        const normalizedOrders = ordersPage.data.map((order) => ({
           ...order,
           total: Number(order.total)
         }));
@@ -58,6 +63,8 @@ export function OrdersTable() {
         }));
         setOrders(normalizedOrders);
         setRiders(normalizedRiders);
+        setTotalPages(ordersPage.totalPages);
+        setTotal(ordersPage.total);
         setSelectedOrders(
           normalizedOrders.reduce<Record<string, string | undefined>>((acc, order) => {
             acc[order.id] = order.assignedRiderId ?? undefined;
@@ -80,7 +87,7 @@ export function OrdersTable() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [page, pageSize]);
 
   const handleAssign = async (orderId: string, riderId?: string) => {
     try {
@@ -166,6 +173,17 @@ export function OrdersTable() {
           ))
         )}
       </div>
+      <PaginationControls
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(1);
+        }}
+      />
     </Card>
   );
 }

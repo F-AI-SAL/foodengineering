@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { apiFetch, API_BASE } from "@/lib/api";
+import { apiFetch, apiFetchPage, apiFetchList, API_BASE } from "@/lib/api";
 import { getAuthHeaders } from "@/lib/auth";
 import type { MenuItem, MenuItemOptionChoice, MenuItemOptionGroup } from "@/lib/types";
 import { Button } from "@/components/design-system/Button";
 import { Card } from "@/components/design-system/Card";
 import { FieldWrapper, Input, Select, Textarea } from "@/components/design-system/Form";
 import { EmptyState, ErrorState, LoadingState } from "@/components/design-system/States";
+import { PaginationControls } from "@/components/design-system/Pagination";
 
 const createId = () => Math.random().toString(36).slice(2, 10);
 
@@ -29,21 +30,30 @@ export function MenuManager() {
   const [uploadMessage, setUploadMessage] = useState("");
   const [categoryInput, setCategoryInput] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     let active = true;
-    Promise.all([apiFetch<MenuItem[]>("/menu"), apiFetch<SettingRecord[]>("/settings")])
-      .then(([data, settings]) => {
+    Promise.all([
+      apiFetchPage<MenuItem>("/menu", {}, page, pageSize),
+      apiFetchList<SettingRecord>("/settings", {}, 1, 200)
+    ])
+      .then(([response, settings]) => {
         if (!active) {
           return;
         }
-        const normalized = data.map((item) => ({
+        const normalized = response.data.map((item) => ({
           ...item,
           price: Number(item.price),
           optionsJson: item.optionsJson ?? { groups: [] }
         }));
         setItems(normalized);
         setSelectedId(normalized[0]?.id ?? "");
+        setTotalPages(response.totalPages);
+        setTotal(response.total);
 
         const stored = settings.find((entry) => entry.key === "menu_categories")?.valueJson;
         if (Array.isArray(stored) && stored.length) {
@@ -68,7 +78,7 @@ export function MenuManager() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [page, pageSize]);
 
   const activeItem = useMemo(
     () => items.find((item) => item.id === selectedId) ?? items[0],
@@ -493,6 +503,19 @@ export function MenuManager() {
                   );
                 })
               )}
+            </div>
+            <div className="px-lg py-md">
+              <PaginationControls
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                pageSize={pageSize}
+                onPageChange={setPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setPage(1);
+                }}
+              />
             </div>
           </div>
 

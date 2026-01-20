@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiFetchList, apiFetchPage } from "@/lib/api";
 import type { AutomationRule, Coupon, Promotion, Segment } from "@/lib/types";
 import { Card } from "@/components/design-system/Card";
 import { Button } from "@/components/design-system/Button";
 import { FieldWrapper, Input, Select, Textarea } from "@/components/design-system/Form";
+import { PaginationControls } from "@/components/design-system/Pagination";
 import { EmptyState, ErrorState, LoadingState } from "@/components/design-system/States";
 
 const steps = ["Basics", "Trigger", "Action", "Review"];
@@ -23,6 +24,10 @@ export function AutomationCenter() {
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [activeStep, setActiveStep] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const [name, setName] = useState("");
   const [triggerType, setTriggerType] = useState("schedule");
@@ -43,14 +48,16 @@ export function AutomationCenter() {
   useEffect(() => {
     let active = true;
     Promise.all([
-      apiFetch<AutomationWithExecutions[]>("/automation"),
-      apiFetch<Promotion[]>("/promotions"),
-      apiFetch<Coupon[]>("/coupons"),
-      apiFetch<Segment[]>("/segments")
+      apiFetchPage<AutomationWithExecutions>("/automation", {}, page, pageSize),
+      apiFetchList<Promotion>("/promotions", {}, 1, 200),
+      apiFetchList<Coupon>("/coupons", {}, 1, 200),
+      apiFetchList<Segment>("/segments", {}, 1, 200)
     ])
-      .then(([data, promoRows, couponRows, segmentRows]) => {
+      .then(([response, promoRows, couponRows, segmentRows]) => {
         if (active) {
-          setRules(data);
+          setRules(response.data);
+          setTotalPages(response.totalPages);
+          setTotal(response.total);
           setPromotions(promoRows);
           setCoupons(couponRows);
           setSegments(segmentRows);
@@ -71,7 +78,7 @@ export function AutomationCenter() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [page, pageSize]);
 
   const executions = useMemo(
     () => rules.flatMap((rule) => rule.executions?.map((exec) => ({ ...exec, ruleId: rule.id })) ?? []),
@@ -348,6 +355,17 @@ export function AutomationCenter() {
             ))}
           </div>
         )}
+        <PaginationControls
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+        />
       </Card>
 
       <Card title="Execution Logs" subtitle="Automations executed with timestamps.">

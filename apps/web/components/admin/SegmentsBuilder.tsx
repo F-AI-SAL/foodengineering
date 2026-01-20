@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiFetchList, apiFetchPage } from "@/lib/api";
 import type { Segment } from "@/lib/types";
 import { Card } from "@/components/design-system/Card";
 import { Button } from "@/components/design-system/Button";
 import { FieldWrapper, Input, Select } from "@/components/design-system/Form";
+import { PaginationControls } from "@/components/design-system/Pagination";
 import { EmptyState, ErrorState, LoadingState } from "@/components/design-system/States";
 
 type SegmentConfig = Record<string, number | string>;
@@ -27,16 +28,22 @@ export function SegmentsBuilder() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [name, setName] = useState("");
   const [segmentType, setSegmentType] = useState<keyof typeof PRESETS>("new");
   const [config, setConfig] = useState<SegmentConfig>(PRESETS.new.config);
 
   useEffect(() => {
     let active = true;
-    apiFetch<Segment[]>("/segments")
-      .then((data) => {
+    apiFetchPage<Segment>("/segments", {}, page, pageSize)
+      .then((response) => {
         if (active) {
-          setSegments(data);
+          setSegments(response.data);
+          setTotalPages(response.totalPages);
+          setTotal(response.total);
           setError(null);
         }
       })
@@ -54,7 +61,7 @@ export function SegmentsBuilder() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [page, pageSize]);
 
   const handlePresetChange = (value: keyof typeof PRESETS) => {
     setSegmentType(value);
@@ -221,6 +228,17 @@ export function SegmentsBuilder() {
             ))}
           </div>
         )}
+        <PaginationControls
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+        />
       </Card>
     </div>
   );

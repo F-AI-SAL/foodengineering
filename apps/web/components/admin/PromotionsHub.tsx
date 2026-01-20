@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiFetchList, apiFetchPage } from "@/lib/api";
 import type { Promotion, Segment } from "@/lib/types";
 import { Card } from "@/components/design-system/Card";
 import { Button } from "@/components/design-system/Button";
 import { Badge } from "@/components/design-system/Badge";
 import { FieldWrapper, Input, Select, Textarea } from "@/components/design-system/Form";
+import { PaginationControls } from "@/components/design-system/Pagination";
 import { EmptyState, ErrorState, LoadingState } from "@/components/design-system/States";
 
 const steps = ["Basics", "Conditions", "Actions", "Schedule", "Review"];
@@ -42,6 +43,10 @@ export function PromotionsHub() {
   const [error, setError] = useState<string | null>(null);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [segments, setSegments] = useState<Segment[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -63,12 +68,17 @@ export function PromotionsHub() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([apiFetch<Promotion[]>("/promotions"), apiFetch<Segment[]>("/segments")])
-      .then(([promoRows, segmentRows]) => {
+    Promise.all([
+      apiFetchPage<Promotion>("/promotions", {}, page, pageSize),
+      apiFetchList<Segment>("/segments", {}, 1, 200)
+    ])
+      .then(([promoResponse, segmentRows]) => {
         if (!active) {
           return;
         }
-        setPromotions(promoRows);
+        setPromotions(promoResponse.data);
+        setTotalPages(promoResponse.totalPages);
+        setTotal(promoResponse.total);
         setSegments(segmentRows);
         setError(null);
       })
@@ -86,7 +96,7 @@ export function PromotionsHub() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [page, pageSize]);
 
   useEffect(() => {
     if (schedulePreset === "weekend") {
@@ -536,6 +546,17 @@ export function PromotionsHub() {
                   ))
                 )}
               </div>
+              <PaginationControls
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                pageSize={pageSize}
+                onPageChange={setPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setPage(1);
+                }}
+              />
             </Card>
             <Card title="Safety Guardrails" subtitle="Always on to prevent over-discounting.">
               <div className="space-y-xs text-xs text-muted">

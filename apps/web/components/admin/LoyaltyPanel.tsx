@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiFetchList, apiFetchPage } from "@/lib/api";
 import { Card } from "@/components/design-system/Card";
 import { Button } from "@/components/design-system/Button";
 import { FieldWrapper, Input, Select, Textarea } from "@/components/design-system/Form";
+import { PaginationControls } from "@/components/design-system/Pagination";
 import { EmptyState, ErrorState, LoadingState } from "@/components/design-system/States";
 
 type LoyaltyTier = {
@@ -42,6 +43,10 @@ export function LoyaltyPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const [customerId, setCustomerId] = useState("");
   const [points, setPoints] = useState(0);
@@ -51,7 +56,7 @@ export function LoyaltyPanel() {
     let active = true;
     Promise.allSettled([
       apiFetch<LoyaltyTier[]>("/loyalty/tiers"),
-      apiFetch<LoyaltyMember[]>("/loyalty/members"),
+      apiFetchPage<LoyaltyMember>("/loyalty/members", {}, page, pageSize),
       apiFetch<{ key: string; valueJson: LoyaltyRewards }>("/settings/loyalty_rewards")
     ])
       .then(([tiersResult, membersResult, rewardsResult]) => {
@@ -64,7 +69,9 @@ export function LoyaltyPanel() {
           setError("Unable to load loyalty tiers.");
         }
         if (membersResult.status === "fulfilled") {
-          setMembers(membersResult.value);
+          setMembers(membersResult.value.data);
+          setTotalPages(membersResult.value.totalPages);
+          setTotal(membersResult.value.total);
         } else {
           setError("Unable to load loyalty members.");
         }
@@ -81,7 +88,7 @@ export function LoyaltyPanel() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [page, pageSize]);
 
   const handleAdjust = async () => {
     setStatusMessage("Saving...");
@@ -376,6 +383,17 @@ export function LoyaltyPanel() {
             ))}
           </div>
         )}
+        <PaginationControls
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+        />
       </Card>
     </div>
   );

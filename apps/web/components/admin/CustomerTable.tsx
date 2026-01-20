@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { apiFetchPage } from "@/lib/api";
 import { Card } from "@/components/design-system/Card";
+import { PaginationControls } from "@/components/design-system/Pagination";
 import { EmptyState, ErrorState, LoadingState } from "@/components/design-system/States";
 
 type CustomerRow = {
@@ -17,13 +18,19 @@ export function CustomerTable() {
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     let active = true;
-    apiFetch<CustomerRow[]>("/customers")
-      .then((data) => {
+    apiFetchPage<CustomerRow>("/customers", {}, page, pageSize)
+      .then((response) => {
         if (active) {
-          setCustomers(data);
+          setCustomers(response.data);
+          setTotalPages(response.totalPages);
+          setTotal(response.total);
           setError(null);
         }
       })
@@ -41,7 +48,7 @@ export function CustomerTable() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [page, pageSize]);
 
   return (
     <Card title="Customer Directory" subtitle="Customer insights and order history.">
@@ -67,6 +74,17 @@ export function CustomerTable() {
           ))
         )}
       </div>
+      <PaginationControls
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(1);
+        }}
+      />
     </Card>
   );
 }

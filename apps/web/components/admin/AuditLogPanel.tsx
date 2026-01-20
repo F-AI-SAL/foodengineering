@@ -1,22 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { apiFetchPage } from "@/lib/api";
 import type { AuditLogEntry } from "@/lib/types";
 import { Card } from "@/components/design-system/Card";
+import { PaginationControls } from "@/components/design-system/Pagination";
 import { EmptyState, ErrorState, LoadingState } from "@/components/design-system/States";
 
 export function AuditLogPanel() {
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     let active = true;
-    apiFetch<AuditLogEntry[]>("/audit")
-      .then((data) => {
+    apiFetchPage<AuditLogEntry>("/audit", {}, page, pageSize)
+      .then((response) => {
         if (active) {
-          setLogs(data);
+          setLogs(response.data);
+          setTotalPages(response.totalPages);
+          setTotal(response.total);
           setError(null);
         }
       })
@@ -34,7 +41,7 @@ export function AuditLogPanel() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [page, pageSize]);
 
   return (
     <div className="space-y-2xl">
@@ -59,6 +66,17 @@ export function AuditLogPanel() {
             ))}
           </div>
         )}
+        <PaginationControls
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+        />
       </Card>
     </div>
   );

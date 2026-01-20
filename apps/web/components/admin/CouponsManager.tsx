@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiFetchList, apiFetchPage } from "@/lib/api";
 import type { Coupon, Segment } from "@/lib/types";
 import { Card } from "@/components/design-system/Card";
 import { Button } from "@/components/design-system/Button";
 import { Badge } from "@/components/design-system/Badge";
 import { FieldWrapper, Input, Select } from "@/components/design-system/Form";
+import { PaginationControls } from "@/components/design-system/Pagination";
 import { EmptyState, ErrorState, LoadingState } from "@/components/design-system/States";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -23,6 +24,10 @@ export function CouponsManager() {
   const [error, setError] = useState<string | null>(null);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [segments, setSegments] = useState<Segment[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [statusMessage, setStatusMessage] = useState("");
   const [actionMessage, setActionMessage] = useState("");
 
@@ -42,12 +47,17 @@ export function CouponsManager() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([apiFetch<Coupon[]>("/coupons"), apiFetch<Segment[]>("/segments")])
-      .then(([couponRows, segmentRows]) => {
+    Promise.all([
+      apiFetchPage<Coupon>("/coupons", {}, page, pageSize),
+      apiFetchList<Segment>("/segments", {}, 1, 200)
+    ])
+      .then(([couponResponse, segmentRows]) => {
         if (!active) {
           return;
         }
-        setCoupons(couponRows);
+        setCoupons(couponResponse.data);
+        setTotalPages(couponResponse.totalPages);
+        setTotal(couponResponse.total);
         setSegments(segmentRows);
         setError(null);
       })
@@ -65,7 +75,7 @@ export function CouponsManager() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [page, pageSize]);
 
   const handleGenerate = () => {
     setCode(generateCode());
@@ -262,6 +272,17 @@ export function CouponsManager() {
             ))}
           </div>
         )}
+        <PaginationControls
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+        />
         {actionMessage ? <p className="mt-sm text-xs text-muted">{actionMessage}</p> : null}
       </Card>
     </div>
