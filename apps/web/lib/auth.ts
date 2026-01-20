@@ -12,3 +12,9 @@ export function getAuthHeaders() {
   const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
   return headers;
 }
+
+export function clearAuthToken() {
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(AUTH_TOKEN_KEY);
+  }
+}
