@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import type { Coupon } from "@prisma/client";
 import { evaluateRuleGroup, type RuleSet } from "./rules.engine";
 import { isPlainObject } from "./rules.utils";
 
@@ -276,7 +277,7 @@ export class PricingService {
     };
   }
 
-  private applyCoupon(coupon: any, subtotal: number, hasFreeDelivery: boolean): AppliedDiscount {
+  private applyCoupon(coupon: Coupon, subtotal: number, hasFreeDelivery: boolean): AppliedDiscount {
     if (coupon.minPurchase && subtotal < Number(coupon.minPurchase)) {
       return { sourceId: coupon.id, sourceType: "coupon", amount: 0 };
     }
