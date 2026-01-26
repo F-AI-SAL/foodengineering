@@ -3,7 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { Upload } from "@aws-sdk/lib-storage";
 import { S3Client } from "@aws-sdk/client-s3";
 import { randomUUID } from "crypto";
-import { fileTypeFromBuffer } from "file-type";
+import { fromBuffer as fileTypeFromBuffer } from "file-type";
 import { Readable } from "stream";
 import { tmpdir } from "os";
 import { promises as fs } from "fs";
