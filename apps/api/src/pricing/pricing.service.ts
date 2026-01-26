@@ -78,25 +78,28 @@ export class PricingService {
       orderBy: { priority: "desc" }
     });
 
-    const applicablePromotions = (
-      await Promise.all(
-        promotions.map(async (promotion) => {
-          const budgetCap = Number(promotion.budgetCap ?? defaultPromotionBudget ?? 0);
-          if (budgetCap > 0) {
-            const spent = await this.prisma.redemption.aggregate({
-              where: { promotionId: promotion.id },
-              _sum: { discountAmount: true }
-            });
-            const spentAmount = Number(spent._sum.discountAmount ?? 0);
-            if (spentAmount >= budgetCap) {
-              return null;
-            }
-          }
+    let budgetSpentByPromotion = new Map<string, number>();
+    if (promotions.length > 0) {
+      const spentRows = await this.prisma.redemption.groupBy({
+        by: ["promotionId"],
+        where: { promotionId: { in: promotions.map((promotion) => promotion.id) } },
+        _sum: { discountAmount: true }
+      });
+      budgetSpentByPromotion = new Map(
+        spentRows
+          .filter((row) => typeof row.promotionId === "string")
+          .map((row) => [row.promotionId as string, Number(row._sum.discountAmount ?? 0)])
+      );
+    }
 
-          return promotion;
-        })
-      )
-    ).filter(Boolean) as typeof promotions;
+    const applicablePromotions = promotions.filter((promotion) => {
+      const budgetCap = Number(promotion.budgetCap ?? defaultPromotionBudget ?? 0);
+      if (budgetCap <= 0) {
+        return true;
+      }
+      const spentAmount = budgetSpentByPromotion.get(promotion.id) ?? 0;
+      return spentAmount < budgetCap;
+    });
 
     const eligiblePromotions = applicablePromotions.filter((promotion) => {
       const ruleSet = promotion.rulesJson as unknown as RuleSet;
