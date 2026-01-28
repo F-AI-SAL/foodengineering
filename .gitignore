@@ -10,6 +10,7 @@ apps/web/.env
 apps/api/dist/
 apps/web/.next/
 apps/gateway/dist/
+apps/notifications/dist/
 apps/api/uploads/
 apps/api/prisma-dev*.log
 prisma-dev*.log

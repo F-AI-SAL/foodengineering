@@ -96,6 +96,23 @@ API proxied via: `http://localhost:4010/api/*`
 Shared API contracts live in `packages/contracts`.
 They provide stable types for health responses, pagination, and error payloads.
 
+## Notifications Service (First Extraction)
+
+This service owns email/WhatsApp delivery and notification queue processing.
+
+### Run Notifications Service (Local)
+```bash
+cd d:\food_engineering\apps\notifications
+npm install
+copy .env.example .env
+npm run prisma:generate
+npm run start:dev
+```
+
+Notifications URL: `http://localhost:4020`  
+Health: `GET /health`  
+Gateway routing: `http://localhost:4010/api/notifications/*`
+
 ## Deployment (Enterprise Baseline)
 
 ### Web (Vercel)

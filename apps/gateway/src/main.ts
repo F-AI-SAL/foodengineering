@@ -17,6 +17,7 @@ async function bootstrap() {
   app.use(helmet());
 
   const upstream = config.get<string>("UPSTREAM_API_URL") ?? "http://localhost:4000";
+  const notificationsUrl = config.get<string>("NOTIFICATIONS_URL");
   const timeoutMs = Number(config.get<string>("REQUEST_TIMEOUT_MS") ?? "8000");
 
   const proxy = createProxyMiddleware({
@@ -34,6 +35,26 @@ async function bootstrap() {
       }
     }
   });
+
+  if (notificationsUrl) {
+    const notificationsProxy = createProxyMiddleware({
+      target: notificationsUrl,
+      changeOrigin: true,
+      proxyTimeout: timeoutMs,
+      pathRewrite: { "^/api/notifications": "/notifications" },
+      on: {
+        error: (_err, _req, res) => {
+          const response = res as Response;
+          if (!response.headersSent) {
+            response.status(502).json({ message: "Notifications service unavailable" });
+          }
+        }
+      }
+    });
+    app.use("/api/notifications", (req: Request, res: Response, next: () => void) =>
+      notificationsProxy(req, res, next)
+    );
+  }
 
   app.use("/api", (req: Request, res: Response, next: () => void) => proxy(req, res, next));
 

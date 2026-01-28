@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum NotificationJobStatus {
+  queued
+  processing
+  sent
+  failed
+}
+
+model NotificationJob {
+  id          String                @id @default(uuid())
+  channel     String
+  payloadJson Json
+  status      NotificationJobStatus @default(queued)
+  attempts    Int                   @default(0)
+  scheduledAt DateTime              @default(now())
+  sentAt      DateTime?
+  lastError   String?
+  createdAt   DateTime              @default(now())
+
+  @@index([status, scheduledAt])
+}
