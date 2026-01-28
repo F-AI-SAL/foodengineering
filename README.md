@@ -71,8 +71,25 @@ Web will be on `http://localhost:3000`.
 - Frontend base: `apps/web/.env.example`
 - Frontend local: `apps/web/.env.local.example`
 - Frontend production: `apps/web/.env.production.example`
+- Gateway base: `apps/gateway/.env.example`
 
 Copy the local template to `.env` or `.env.local` before running.
+
+## Gateway (Option C - Safe Microservice Start)
+
+The gateway sits in front of the API and proxies `/api/*` requests to the upstream API.
+This is the first step to microservice isolation without breaking the current app.
+
+### Run Gateway (Local)
+```bash
+cd d:\food_engineering\apps\gateway
+npm install
+copy .env.example .env
+npm run start:dev
+```
+
+Gateway URL: `http://localhost:4010`  
+API proxied via: `http://localhost:4010/api/*`
 
 ## Deployment (Enterprise Baseline)
 
