@@ -91,6 +91,11 @@ npm run start:dev
 Gateway URL: `http://localhost:4010`  
 API proxied via: `http://localhost:4010/api/*`
 
+## Shared Contracts
+
+Shared API contracts live in `packages/contracts`.
+They provide stable types for health responses, pagination, and error payloads.
+
 ## Deployment (Enterprise Baseline)
 
 ### Web (Vercel)
