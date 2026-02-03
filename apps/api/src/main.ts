@@ -1,6 +1,5 @@
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
-import { WsAdapter } from "@nestjs/platform-ws";
 import { ConfigService } from "@nestjs/config";
 import { AppModule } from "./app.module";
 import * as Sentry from "@sentry/node";
@@ -65,7 +64,6 @@ async function bootstrap() {
     const httpAdapter = app.get(HttpAdapterHost);
     app.useGlobalFilters(new SentryExceptionFilter(httpAdapter));
   }
-  app.useWebSocketAdapter(new WsAdapter(app));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

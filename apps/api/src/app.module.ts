@@ -9,7 +9,6 @@ import { MenuModule } from "./menu/menu.module";
 import { RidersModule } from "./riders/riders.module";
 import { CustomersModule } from "./customers/customers.module";
 import { ChatModule } from "./chat/chat.module";
-import { TrackingModule } from "./tracking/tracking.module";
 import { RolesModule } from "./roles/roles.module";
 import { PromotionsModule } from "./promotions/promotions.module";
 import { CouponsModule } from "./coupons/coupons.module";
@@ -40,7 +39,6 @@ import { UploadsModule } from "./uploads/uploads.module";
     RidersModule,
     CustomersModule,
     ChatModule,
-    TrackingModule,
     RolesModule,
     CommonModule,
     PromotionsModule,
