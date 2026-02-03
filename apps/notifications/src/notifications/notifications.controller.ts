@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Headers, Post, Query, UseGuards, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NotificationsService } from "./notifications.service";
 import { Roles } from "../roles/roles.decorator";
@@ -8,9 +8,9 @@ import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificationsQueue } from "./notifications.queue";
 import { NotificationTestDto } from "./dto/notification-test.dto";
+import { NotificationQueueDto } from "./dto/notification-queue.dto";
 
 @Controller("notifications")
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class NotificationsController {
   constructor(
     private readonly prisma: PrismaService,
@@ -20,6 +20,7 @@ export class NotificationsController {
   ) {}
 
   @Get("status")
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.OWNER)
   async status(@Query("status") status?: string) {
     const [queued, failed, sent] = await Promise.all([
@@ -48,6 +49,7 @@ export class NotificationsController {
   }
 
   @Post("retry")
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.OWNER)
   async retryFailed() {
     await this.prisma.notificationJob.updateMany({
@@ -57,7 +59,21 @@ export class NotificationsController {
     return { message: "Failed jobs re-queued." };
   }
 
+  @Post("queue")
+  async enqueue(@Body() dto: NotificationQueueDto, @Headers("x-service-key") serviceKey?: string) {
+    const requiredKey = this.config.get<string>("NOTIFICATIONS_SHARED_SECRET");
+    if (requiredKey) {
+      if (serviceKey !== requiredKey) {
+        throw new UnauthorizedException("Invalid service key.");
+      }
+    }
+
+    await this.notificationsQueue.enqueue(dto.channel, dto.payload);
+    return { message: "Queued." };
+  }
+
   @Post("test")
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.OWNER)
   async sendTest(@Body() dto: NotificationTestDto) {
     const recipient = dto.email ?? this.config.get<string>("NOTIFICATION_TEST_EMAIL") ?? undefined;

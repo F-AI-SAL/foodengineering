@@ -91,6 +91,26 @@ npm run start:dev
 Gateway URL: `http://localhost:4010`  
 API proxied via: `http://localhost:4010/api/*`
 
+## P0 Production Blockers (Must-do)
+
+### 1) Web env → Gateway
+Set on Vercel:
+- `NEXT_PUBLIC_API_URL=https://<gateway-domain>/api`
+- `NEXT_PUBLIC_WS_URL=wss://<gateway-domain>/ws`
+
+### 2) Gateway env
+Set on Render/Railway (gateway):
+- `UPSTREAM_API_URL=https://<api-domain>`
+- `NOTIFICATIONS_URL=https://<notifications-domain>`
+- `REALTIME_URL=https://<realtime-domain>`
+- `CORS_ORIGIN=https://<web-domain>`
+
+### 3) API env
+Use a stable DB in production (do NOT use Prisma dev URLs):
+- `DATABASE_URL=postgresql://user:pass@host:5432/db`
+- `JWT_SECRET=strong-secret`
+- `CORS_ORIGIN=https://<web-domain>`
+
 ## Shared Contracts
 
 Shared API contracts live in `packages/contracts`.

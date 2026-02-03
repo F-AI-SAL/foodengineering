@@ -3,8 +3,7 @@ import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import { randomBytes, createHash } from "crypto";
 import { ConfigService } from "@nestjs/config";
-import { NotificationsService } from "../notifications/notifications.service";
-import { NotificationsQueue } from "../notifications/notifications.queue";
+import { NotificationsClient } from "../common/notifications.client";
 import { PrismaService } from "../prisma/prisma.service";
 import type { User } from "@prisma/client";
 
@@ -18,8 +17,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
-    private readonly notificationsService: NotificationsService,
-    private readonly notificationsQueue: NotificationsQueue
+    private readonly notificationsClient: NotificationsClient
   ) {}
 
   async validateUser(email: string, password: string): Promise<SafeUser> {
@@ -78,33 +76,15 @@ export class AuthService {
     const resetUrl = `${appUrl}/admin/login?reset=${rawToken}`;
     const message = `Use this link to reset your password: ${resetUrl}`;
 
-    try {
-      await this.notificationsService.sendEmail({
-        to: user.email,
-        subject: "Reset your Food Engineering password",
-        html: `<p>${message}</p>`,
-        text: message
-      });
-    } catch (_error) {
-      this.logger.warn("Email failed. Queuing retry.");
-      await this.notificationsQueue.enqueue("email", {
-        to: user.email,
-        subject: "Reset your Food Engineering password",
-        html: `<p>${message}</p>`,
-        text: message
-      });
-    }
+    await this.notificationsClient.enqueue("email", {
+      to: user.email,
+      subject: "Reset your Food Engineering password",
+      html: `<p>${message}</p>`,
+      text: message
+    });
 
     if (user.phone) {
-      try {
-        await this.notificationsService.sendWhatsApp({
-          to: user.phone,
-          body: message
-        });
-      } catch (_error) {
-        this.logger.warn("WhatsApp failed. Queuing retry.");
-        await this.notificationsQueue.enqueue("whatsapp", { to: user.phone, body: message });
-      }
+      await this.notificationsClient.enqueue("whatsapp", { to: user.phone, body: message });
     }
 
     return response;

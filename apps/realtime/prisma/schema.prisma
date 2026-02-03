@@ -36,7 +36,7 @@ model ChatThread {
   orderId   String
   status    ChatThreadStatus @default(open)
   createdAt DateTime         @default(now())
-  messages  ChatMessage[]
+  messages  ChatMessage[]    @relation("ChatThreadMessages")
 
   @@index([orderId])
   @@index([status, createdAt])
@@ -45,6 +45,7 @@ model ChatThread {
 model ChatMessage {
   id         String   @id @default(uuid())
   threadId   String
+  thread     ChatThread @relation("ChatThreadMessages", fields: [threadId], references: [id])
   senderRole UserRole
   senderName String
   message    String

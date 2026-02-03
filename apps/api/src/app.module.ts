@@ -21,7 +21,6 @@ import { GrowthModule } from "./growth/growth.module";
 import { CommonModule } from "./common/common.module";
 import { SettingsModule } from "./settings/settings.module";
 import { AuthModule } from "./auth/auth.module";
-import { NotificationsModule } from "./notifications/notifications.module";
 import { UploadsModule } from "./uploads/uploads.module";
 
 @Module({
@@ -51,7 +50,6 @@ import { UploadsModule } from "./uploads/uploads.module";
     GrowthModule,
     SettingsModule,
     AuthModule,
-    NotificationsModule,
     UploadsModule
   ]
 })

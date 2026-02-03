@@ -5,12 +5,11 @@ import { AuthService } from "./auth.service";
 import { AuthController } from "./auth.controller";
 import { JwtStrategy } from "./jwt.strategy";
 import { PrismaModule } from "../prisma/prisma.module";
-import { NotificationsModule } from "../notifications/notifications.module";
+import { NotificationsClient } from "../common/notifications.client";
 
 @Module({
   imports: [
     PrismaModule,
-    NotificationsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -21,7 +20,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
     })
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, NotificationsClient],
   exports: [AuthService, JwtModule]
 })
 export class AuthModule {}
