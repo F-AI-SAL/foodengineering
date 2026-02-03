@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  preparing
+  ready
+  on_delivery
+  delivered
+  cancelled
+}
+
+enum ChatThreadStatus {
+  open
+  closed
+}
+
+enum UserRole {
+  owner
+  admin
+  manager
+  support
+  rider
+  customer
+}
+
+model ChatThread {
+  id        String           @id @default(uuid())
+  orderId   String
+  status    ChatThreadStatus @default(open)
+  createdAt DateTime         @default(now())
+  messages  ChatMessage[]
+
+  @@index([orderId])
+  @@index([status, createdAt])
+}
+
+model ChatMessage {
+  id         String   @id @default(uuid())
+  threadId   String
+  senderRole UserRole
+  senderName String
+  message    String
+  createdAt  DateTime @default(now())
+
+  @@index([threadId, createdAt])
+}
+
+model TrackingUpdate {
+  id        String      @id @default(uuid())
+  orderId   String
+  riderId   String?
+  status    OrderStatus?
+  lat       Float
+  lng       Float
+  createdAt DateTime    @default(now())
+}

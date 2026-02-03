@@ -18,6 +18,7 @@ async function bootstrap() {
 
   const upstream = config.get<string>("UPSTREAM_API_URL") ?? "http://localhost:4000";
   const notificationsUrl = config.get<string>("NOTIFICATIONS_URL");
+  const realtimeUrl = config.get<string>("REALTIME_URL");
   const timeoutMs = Number(config.get<string>("REQUEST_TIMEOUT_MS") ?? "8000");
 
   const proxy = createProxyMiddleware({
@@ -54,6 +55,24 @@ async function bootstrap() {
     app.use("/api/notifications", (req: Request, res: Response, next: () => void) =>
       notificationsProxy(req, res, next)
     );
+  }
+
+  if (realtimeUrl) {
+    const realtimeProxy = createProxyMiddleware({
+      target: realtimeUrl,
+      changeOrigin: true,
+      ws: true,
+      proxyTimeout: timeoutMs,
+      on: {
+        error: (_err, _req, res) => {
+          const response = res as Response;
+          if (!response.headersSent) {
+            response.status(502).json({ message: "Realtime service unavailable" });
+          }
+        }
+      }
+    });
+    app.use("/ws", (req: Request, res: Response, next: () => void) => realtimeProxy(req, res, next));
   }
 
   app.use("/api", (req: Request, res: Response, next: () => void) => proxy(req, res, next));

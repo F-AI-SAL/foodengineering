@@ -113,6 +113,22 @@ Notifications URL: `http://localhost:4020`
 Health: `GET /health`  
 Gateway routing: `http://localhost:4010/api/notifications/*`
 
+## Realtime Service (WebSockets)
+
+This service hosts chat + tracking WebSocket gateways.
+
+### Run Realtime Service (Local)
+```bash
+cd d:\food_engineering\apps\realtime
+npm install
+copy .env.example .env
+npm run prisma:generate
+npm run start:dev
+```
+
+Realtime WS URL: `ws://localhost:4030/ws`  
+Gateway WS URL: `ws://localhost:4010/ws`
+
 ## Deployment (Enterprise Baseline)
 
 ### Web (Vercel)

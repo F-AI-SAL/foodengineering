@@ -11,6 +11,7 @@ apps/api/dist/
 apps/web/.next/
 apps/gateway/dist/
 apps/notifications/dist/
+apps/realtime/dist/
 apps/api/uploads/
 apps/api/prisma-dev*.log
 prisma-dev*.log
