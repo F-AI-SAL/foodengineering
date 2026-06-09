@@ -4,13 +4,14 @@ import { ConfigService } from "@nestjs/config";
 import { TrackingGateway } from "./tracking.gateway";
 import { TrackingService } from "./tracking.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { requireJwtSecret } from "../auth/require-jwt-secret";
 
 @Module({
   imports: [
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>("JWT_SECRET") ?? "change-me",
+        secret: requireJwtSecret(config),
         signOptions: { expiresIn: config.get<string>("JWT_EXPIRES_IN") ?? "1d" }
       })
     })

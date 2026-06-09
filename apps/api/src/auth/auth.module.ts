@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { AuthService } from "./auth.service";
 import { AuthController } from "./auth.controller";
 import { JwtStrategy } from "./jwt.strategy";
+import { requireJwtSecret } from "./require-jwt-secret";
 import { PrismaModule } from "../prisma/prisma.module";
 import { NotificationsClient } from "../common/notifications.client";
 
@@ -14,7 +15,7 @@ import { NotificationsClient } from "../common/notifications.client";
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>("JWT_SECRET") ?? "change-me",
+        secret: requireJwtSecret(config),
         signOptions: { expiresIn: config.get<string>("JWT_EXPIRES_IN") ?? "1d" }
       })
     })

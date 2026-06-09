@@ -73,8 +73,10 @@ export class PricingService {
     const promotions = await this.prisma.promotion.findMany({
       where: {
         status: "active",
-        OR: [{ startAt: null }, { startAt: { lte: now } }],
-        AND: [{ endAt: null }, { endAt: { gte: now } }]
+        AND: [
+          { OR: [{ startAt: null }, { startAt: { lte: now } }] },
+          { OR: [{ endAt: null }, { endAt: { gte: now } }] }
+        ]
       },
       orderBy: { priority: "desc" }
     });
@@ -139,8 +141,10 @@ export class PricingService {
         where: {
           code: input.couponCode,
           isActive: true,
-          OR: [{ startAt: null }, { startAt: { lte: now } }],
-          AND: [{ endAt: null }, { endAt: { gte: now } }]
+          AND: [
+            { OR: [{ startAt: null }, { startAt: { lte: now } }] },
+            { OR: [{ endAt: null }, { endAt: { gte: now } }] }
+          ]
         }
       });
 
