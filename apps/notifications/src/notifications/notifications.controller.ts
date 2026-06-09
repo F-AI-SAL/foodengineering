@@ -1,5 +1,6 @@
-import { BadRequestException, Body, Controller, Get, Headers, Post, Query, UseGuards, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Headers, Logger, Post, Query, UseGuards, UnauthorizedException, ServiceUnavailableException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { timingSafeEqual } from "crypto";
 import { NotificationsService } from "./notifications.service";
 import { Roles } from "../roles/roles.decorator";
 import { RolesGuard } from "../roles/roles.guard";
@@ -12,6 +13,8 @@ import { NotificationQueueDto } from "./dto/notification-queue.dto";
 
 @Controller("notifications")
 export class NotificationsController {
+  private readonly logger = new Logger(NotificationsController.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
@@ -61,15 +64,34 @@ export class NotificationsController {
 
   @Post("queue")
   async enqueue(@Body() dto: NotificationQueueDto, @Headers("x-service-key") serviceKey?: string) {
-    const requiredKey = this.config.get<string>("NOTIFICATIONS_SHARED_SECRET");
-    if (requiredKey) {
-      if (serviceKey !== requiredKey) {
-        throw new UnauthorizedException("Invalid service key.");
-      }
-    }
-
+    this.assertServiceKey(serviceKey);
     await this.notificationsQueue.enqueue(dto.channel, dto.payload);
     return { message: "Queued." };
+  }
+
+  private assertServiceKey(serviceKey?: string) {
+    const requiredKey = this.config.get<string>("NOTIFICATIONS_SHARED_SECRET");
+    const isProduction =
+      (this.config.get<string>("NODE_ENV") ?? process.env.NODE_ENV) === "production";
+
+    if (!requiredKey || !requiredKey.trim()) {
+      // Fail closed in production; allow (with a warning) in non-production for local dev.
+      if (isProduction) {
+        throw new ServiceUnavailableException(
+          "NOTIFICATIONS_SHARED_SECRET is not configured; refusing unauthenticated service requests."
+        );
+      }
+      this.logger.warn(
+        "NOTIFICATIONS_SHARED_SECRET is not set; allowing unauthenticated /notifications/queue in non-production only."
+      );
+      return;
+    }
+
+    const provided = Buffer.from(serviceKey ?? "");
+    const expected = Buffer.from(requiredKey);
+    if (provided.length !== expected.length || !timingSafeEqual(provided, expected)) {
+      throw new UnauthorizedException("Invalid service key.");
+    }
   }
 
   @Post("test")
