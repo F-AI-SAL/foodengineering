@@ -1,0 +1,30 @@
+services:
+  postgres_notifications:
+    image: postgres:16
+    container_name: foodengine_notifications_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: notifications_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - notifications_db_data:/var/lib/postgresql/data
+
+  postgres_realtime:
+    image: postgres:16
+    container_name: foodengine_realtime_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: realtime_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - realtime_db_data:/var/lib/postgresql/data
+
+volumes:
+  notifications_db_data:
+  realtime_db_data:
