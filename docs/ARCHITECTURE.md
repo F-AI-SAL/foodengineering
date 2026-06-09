@@ -139,7 +139,32 @@ These are tracked design limitations, not bugs:
    services have no `render.yaml`/`railway.json`/Dockerfile yet.
 7. **Test coverage is minimal** (pagination unit test + web smoke tests only).
 
-## 7. Recent changes
+## 7. Automation engine
+
+Rules (`AutomationRule`) pair a trigger (`schedule` | `event` | `condition`)
+with an action. The scheduler enqueues active `schedule` rules; `runNow`
+enqueues manually. The queue runs each job through `AutomationExecutorService`,
+which performs the real effect and records the outcome on `AutomationExecution`
+(`success` with an `outputJson`, or `failed` with an `errorMessage`).
+
+Action config contracts (`actionConfigJson`):
+
+| Action                  | Config                                                            |
+|-------------------------|-------------------------------------------------------------------|
+| `activate_promotion`    | `{ promotionId }` → sets promotion status `active`                |
+| `deactivate_promotion`  | `{ promotionId }` → sets promotion status `paused`                |
+| `send_notification`     | `{ channel: "email"\|"whatsapp", payload? , to?, subject?, message? }` |
+| `send_coupon`           | `{ couponId\|code, recipients: string[], channel?, subject?, message? }` |
+| `award_loyalty`         | `{ userId, points }` (non-zero) → increments `CustomerProfile.points` |
+| `update_segment`        | not supported yet (no segment-evaluation engine) — fails loudly   |
+
+**Scheduling:** `schedule` rules carry `triggerConfigJson.intervalMinutes`
+(default 1440 = daily). The 5-minute cron only enqueues a rule when its most
+recent execution is older than that interval, so non-idempotent actions
+(e.g. `award_loyalty`) don't fire every tick. `event`/`condition` triggers are
+not yet wired to an event source.
+
+## 8. Recent changes
 
 - **Pricing window fix:** the promotion/coupon active-window query previously
   used an impossible `AND: [{endAt: null}, {endAt: {gte: now}}]`, so it always
@@ -149,3 +174,6 @@ These are tracked design limitations, not bugs:
   sites; added `requireJwtSecret()` (fail fast on unset; reject weak/default in
   production). The notifications `/queue` endpoint now fails closed in
   production and uses a constant-time service-key comparison.
+- **Automation execution:** replaced the no-op queue with a real executor
+  (5 working action handlers + interval-gated scheduling). Previously rules were
+  marked `success` without doing anything.

@@ -1,6 +1,7 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { AutomationExecutorService } from "./automation-executor.service";
 
 interface QueueJob {
   id: string;
@@ -10,10 +11,14 @@ interface QueueJob {
 
 @Injectable()
 export class AutomationQueueService {
+  private readonly logger = new Logger(AutomationQueueService.name);
   private readonly queue: QueueJob[] = [];
   private processing = false;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly executor: AutomationExecutorService
+  ) {}
 
   async enqueue(ruleId: string, payload: Record<string, unknown>) {
     const execution = await this.prisma.automationExecution.create({
@@ -25,7 +30,7 @@ export class AutomationQueueService {
     });
 
     this.queue.push({ id: execution.id, ruleId, payload });
-    this.process();
+    void this.process();
     return execution;
   }
 
@@ -35,34 +40,51 @@ export class AutomationQueueService {
     }
 
     this.processing = true;
-
-    while (this.queue.length) {
-      const job = this.queue.shift();
-      if (!job) {
-        continue;
+    try {
+      while (this.queue.length) {
+        const job = this.queue.shift();
+        if (!job) {
+          continue;
+        }
+        await this.runJob(job);
       }
+    } finally {
+      this.processing = false;
+    }
+  }
 
+  private async runJob(job: QueueJob) {
+    try {
       await this.prisma.automationExecution.update({
         where: { id: job.id },
         data: { status: "running", ranAt: new Date() }
       });
 
-      try {
-        await this.prisma.automationExecution.update({
-          where: { id: job.id },
-          data: {
-            status: "success",
-            outputJson: job.payload as Prisma.InputJsonValue
-          }
-        });
-      } catch (error) {
-        await this.prisma.automationExecution.update({
-          where: { id: job.id },
-          data: { status: "failed", errorMessage: (error as Error).message }
-        });
+      const rule = await this.prisma.automationRule.findUnique({ where: { id: job.ruleId } });
+      if (!rule) {
+        throw new Error(`Automation rule ${job.ruleId} not found.`);
       }
-    }
 
-    this.processing = false;
+      const output = await this.executor.execute(rule);
+
+      await this.prisma.automationExecution.update({
+        where: { id: job.id },
+        data: { status: "success", outputJson: output }
+      });
+    } catch (error) {
+      const message = (error as Error)?.message ?? "Unknown error";
+      this.logger.warn(`Automation execution ${job.id} failed: ${message}`);
+      await this.prisma.automationExecution
+        .update({
+          where: { id: job.id },
+          data: { status: "failed", errorMessage: message }
+        })
+        .catch((updateError) =>
+          this.logger.error(
+            `Failed to record execution failure for ${job.id}`,
+            updateError as Error
+          )
+        );
+    }
   }
 }
